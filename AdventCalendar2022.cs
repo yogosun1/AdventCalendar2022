@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Text;
 
 namespace AdventCalendar2022
 {
@@ -85,6 +86,51 @@ namespace AdventCalendar2022
 
                 totalScoreTask2 += (optionScoreTask2 + resultScoreTask2);
             }
+        }
+
+        [TestMethod]
+        public void Day3()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day3.txt").ToList();
+            int sum = 0;
+            foreach (string input in inputList)
+            {
+                List<char> firstCompartment = input.Take(input.Length / 2).ToList();
+                List<char> secondCompartment = input.Skip(input.Length / 2).ToList();
+                foreach (char item in firstCompartment)
+                {
+                    if (secondCompartment.Contains(item))
+                    {
+                        int ascii = item;
+                        if (ascii < 91)
+                            sum += ascii - 38;
+                        else
+                            sum += ascii - 96;
+                        break;
+                    }
+                }
+            }
+
+            int sum2 = 0;
+            for (int i = 0; i < inputList.Count(); i = i + 3)
+            {
+                string firstRucksack = inputList[i];
+                string secondRucksack = inputList[i+1];
+                string thidRucksack = inputList[i+2];
+                foreach (char item in firstRucksack)
+                {
+                    if (secondRucksack.Contains(item) && thidRucksack.Contains(item))
+                    {
+                        int ascii = item;
+                        if (ascii < 91)
+                            sum2 += ascii - 38;
+                        else
+                            sum2 += ascii - 96;
+                        break;
+                    }
+                }
+            }
+
         }
     }
 }
