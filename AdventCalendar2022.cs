@@ -130,7 +130,30 @@ namespace AdventCalendar2022
                     }
                 }
             }
+        }
 
+        [TestMethod]
+        public void Day4()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day4.txt").ToList();
+            int count = 0;
+            int count2 = 0;
+            foreach (string pair in inputList)
+            {
+                string[] splitPair = pair.Split(',');
+                string elf1 = splitPair[0];
+                string elf2 = splitPair[1];
+                string[] elf1Split = elf1.Split('-');
+                int elf1Start = int.Parse(elf1Split[0]);
+                int elf1End = int.Parse(elf1Split[1]);
+                string[] elf2Split = elf2.Split('-');
+                int elf2Start = int.Parse(elf2Split[0]);
+                int elf2End = int.Parse(elf2Split[1]);
+                if ((elf1Start >= elf2Start && elf1End <= elf2End) || (elf2Start >= elf1Start && elf2End <= elf1End))
+                    count++;
+                if (elf1Start <= elf2End && elf2Start <= elf1End )
+                    count2++;
+            }
         }
     }
 }
