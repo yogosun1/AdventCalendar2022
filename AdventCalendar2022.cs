@@ -115,8 +115,8 @@ namespace AdventCalendar2022
             for (int i = 0; i < inputList.Count(); i = i + 3)
             {
                 string firstRucksack = inputList[i];
-                string secondRucksack = inputList[i+1];
-                string thidRucksack = inputList[i+2];
+                string secondRucksack = inputList[i + 1];
+                string thidRucksack = inputList[i + 2];
                 foreach (char item in firstRucksack)
                 {
                     if (secondRucksack.Contains(item) && thidRucksack.Contains(item))
@@ -151,9 +151,51 @@ namespace AdventCalendar2022
                 int elf2End = int.Parse(elf2Split[1]);
                 if ((elf1Start >= elf2Start && elf1End <= elf2End) || (elf2Start >= elf1Start && elf2End <= elf1End))
                     count++;
-                if (elf1Start <= elf2End && elf2Start <= elf1End )
+                if (elf1Start <= elf2End && elf2Start <= elf1End)
                     count2++;
             }
         }
+
+        [TestMethod]
+        public void Day5()
+        {
+            List<List<char>> stack1List = GetStackList();
+            List<List<char>> stack2List = GetStackList();
+            List<string> inputList = File.ReadAllLines(@"Input\Day5.txt").ToList();
+            foreach (string input in inputList)
+            {
+                string[] splitList = input.Split(' ');
+                int moveCount = int.Parse(splitList[1]);
+                int moveFrom = int.Parse(splitList[3]) - 1;
+                int moveTo = int.Parse(splitList[5]) - 1;
+                for (int i = 0; i < moveCount; i++)
+                {
+                    stack1List[moveTo].Add(stack1List[moveFrom].Last());
+                    stack1List[moveFrom].RemoveAt(stack1List[moveFrom].Count() - 1);
+                }
+                stack2List[moveTo].AddRange(stack2List[moveFrom].TakeLast(moveCount));
+                stack2List[moveFrom].RemoveRange(stack2List[moveFrom].Count() - moveCount, moveCount);
+            }
+            string result1 = string.Empty;
+            stack1List.ForEach(f => result1 += f.Last());
+            string result2 = string.Empty;
+            stack2List.ForEach(f => result2 += f.Last());
+        }
+
+        private List<List<char>> GetStackList()
+        {
+            List<List<char>> stackList = new List<List<char>>();
+            stackList.Add(new List<char> { 'B', 'P', 'N', 'Q', 'H', 'D', 'R', 'T' });
+            stackList.Add(new List<char> { 'W', 'G', 'B', 'J', 'T', 'V' });
+            stackList.Add(new List<char> { 'N', 'R', 'H', 'D', 'S', 'V', 'M', 'Q' });
+            stackList.Add(new List<char> { 'P', 'Z', 'N', 'M', 'C' });
+            stackList.Add(new List<char> { 'D', 'Z', 'B' });
+            stackList.Add(new List<char> { 'V', 'C', 'W', 'Z' });
+            stackList.Add(new List<char> { 'G', 'Z', 'N', 'C', 'V', 'Q', 'L', 'S' });
+            stackList.Add(new List<char> { 'L', 'G', 'J', 'M', 'D', 'N', 'V' });
+            stackList.Add(new List<char> { 'T', 'P', 'M', 'F', 'Z', 'C', 'G' });
+            return stackList;
+        }
+
     }
 }
