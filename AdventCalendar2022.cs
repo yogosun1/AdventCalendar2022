@@ -197,5 +197,26 @@ namespace AdventCalendar2022
             return stackList;
         }
 
+        [TestMethod]
+        public void Day6()
+        {
+            string input = File.ReadAllText(@"Input\Day6.txt");
+            List<char> char1List = new List<char>();
+            List<char> char2List = new List<char>();
+            foreach (char c in input)
+            {
+                char1List.Add(c);
+                if (char1List.TakeLast(4).Distinct().Count() == 4)
+                    break;
+            }
+            foreach (char c in input)
+            {
+                char2List.Add(c);
+                if (char2List.TakeLast(14).Distinct().Count() == 14)
+                    break;
+            }
+            int count1 = char1List.Count();
+            int count2 = char2List.Count();
+        }
     }
 }
