@@ -1,4 +1,6 @@
+using System.Diagnostics;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 
 namespace AdventCalendar2022
@@ -116,10 +118,10 @@ namespace AdventCalendar2022
             {
                 string firstRucksack = inputList[i];
                 string secondRucksack = inputList[i + 1];
-                string thidRucksack = inputList[i + 2];
+                string thirdRucksack = inputList[i + 2];
                 foreach (char item in firstRucksack)
                 {
-                    if (secondRucksack.Contains(item) && thidRucksack.Contains(item))
+                    if (secondRucksack.Contains(item) && thirdRucksack.Contains(item))
                     {
                         int ascii = item;
                         if (ascii < 91)
@@ -217,6 +219,161 @@ namespace AdventCalendar2022
             }
             int count1 = char1List.Count();
             int count2 = char2List.Count();
+        }
+
+        //[TestMethod]
+        //public void Day7()
+        //{
+        //    List<string> inputList = File.ReadAllLines(@"Input\Day7.txt").ToList();
+        //    List<Directory> directoryList = new List<Directory>();
+        //    Directory? currentDirectory = null;
+
+        //    foreach (string input in inputList)
+        //    {
+        //        List<string> inputSplit = input.Split(' ').ToList();
+        //        if (input.StartsWith('$')) // Command
+        //        {
+        //            string command = inputSplit[1];
+        //            if (command == "cd") // change directory
+        //            {
+        //                string folder = inputSplit[2];
+        //                if (folder == "..")
+        //                {
+        //                    if (currentDirectory?.Parent != null)
+        //                        currentDirectory = currentDirectory.Parent;
+        //                    else
+        //                        throw new Exception("No parent exists");
+        //                }
+        //                else
+        //                {
+        //                    Directory? directory = directoryList.FirstOrDefault(w => w.Path == currentDirectory?.Path + folder);
+        //                    if (directory == null)
+        //                    {
+        //                        directory = new Directory { Name = folder, Path = currentDirectory?.Path + folder, Parent = currentDirectory };
+        //                        directoryList.Add(directory);
+        //                    }
+        //                    currentDirectory = directory;
+        //                }
+        //            }
+        //            else if (command == "ls") // list directory
+        //                continue;
+        //        }
+        //        else if (input.StartsWith("dir")) // directory
+        //        {
+        //            string folder = inputSplit[1];
+        //            Directory? directory = directoryList.FirstOrDefault(w => w.Path == currentDirectory?.Path + folder);
+        //            if (directory == null)
+        //            {
+        //                directory = new Directory { Name = folder, Path = currentDirectory?.Path + folder, Parent = currentDirectory };
+        //                directoryList.Add(directory);
+        //            }
+        //        }
+        //        else // file
+        //        {
+        //            int size = int.Parse(inputSplit[0]);
+        //            string name = inputSplit[1];
+        //            SystemFile? systemFile = currentDirectory?.FileList.FirstOrDefault(w => w.Name == name);
+        //            if (systemFile == null && currentDirectory != null)
+        //            {
+        //                systemFile = new SystemFile { Size = size, Name = name };
+        //                currentDirectory.FileList.Add(systemFile);
+        //            }
+        //        }
+        //    }
+
+        //}
+
+        //private class Directory
+        //{
+        //    public Directory()
+        //    {
+        //        FileList = new List<SystemFile>();
+        //    }
+
+        //    public string? Name { get; set; }
+        //    public string? Path { get; set; }
+        //    public Directory? Parent { get; set; }
+        //    public List<SystemFile> FileList { get; set; }
+        //}
+
+        //private class SystemFile
+        //{
+        //    public int Size { get; set; }
+        //    public string? Name { get; set; }
+        //}
+
+        [TestMethod]
+        public void Day7()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day7.txt").ToList();
+            List<SystemFile> fileList = new List<SystemFile>();
+            List<string> directoryPathList = new List<string>();
+            string currentPath = string.Empty;
+
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                if (input.StartsWith('$')) // Command
+                {
+                    string command = inputSplit[1];
+                    if (command == "cd") // change directory
+                    {
+                        string folder = inputSplit[2];
+                        if (folder == "..")
+                            currentPath = currentPath.Substring(0, currentPath.LastIndexOf('/'));
+                        else
+                        {
+                            currentPath = currentPath + "/" + folder;
+                            if (!directoryPathList.Any(a => a == currentPath))
+                                directoryPathList.Add(currentPath);
+                        }
+                    }
+                    else if (command == "ls") // list directory
+                        continue;
+                }
+                else if (input.StartsWith("dir")) // directory
+                {
+                    string path = currentPath + "/" + inputSplit[1];
+                    if (!directoryPathList.Any(a => a == path))
+                        directoryPathList.Add(path);
+                }
+                else // file
+                {
+                    int size = int.Parse(inputSplit[0]);
+                    string name = inputSplit[1];
+                    SystemFile systemFile = fileList.FirstOrDefault(w => w.Name == name && w.Path == currentPath);
+                    if (systemFile == null)
+                    {
+                        systemFile = new SystemFile { Size = size, Name = name, Path = currentPath };
+                        fileList.Add(systemFile);
+                    }
+                }
+            }
+
+            int filteredSize = 0;
+            foreach (string directoryPath in directoryPathList)
+            {
+                Debug.WriteLine(directoryPath + " " + fileList.Where(w => w.Path.Contains(directoryPath)).Count() + " " + fileList.Where(w => w.Path.Contains(directoryPath)).Sum(s => s.Size));
+                int directorySize = fileList.Where(w => w.Path.Contains(directoryPath)).Sum(s => s.Size);
+                if (directorySize <= 100000)
+                    filteredSize += directorySize;
+            }
+
+            int minSize = 70000000;
+            foreach (string directoryPath in directoryPathList)
+            {
+                int directorySize = fileList.Where(w => w.Path.Contains(directoryPath)).Sum(s => s.Size);
+                if (directorySize < minSize && directorySize >= 8381165)
+                    minSize = directorySize;
+            }
+
+        }
+
+        private class SystemFile
+        {
+            public string Name { get; set; }
+            public int Size { get; set; }
+            public string Path { get; set; }
         }
     }
 }
