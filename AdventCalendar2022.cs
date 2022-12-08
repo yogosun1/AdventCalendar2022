@@ -221,87 +221,6 @@ namespace AdventCalendar2022
             int count2 = char2List.Count();
         }
 
-        //[TestMethod]
-        //public void Day7()
-        //{
-        //    List<string> inputList = File.ReadAllLines(@"Input\Day7.txt").ToList();
-        //    List<Directory> directoryList = new List<Directory>();
-        //    Directory? currentDirectory = null;
-
-        //    foreach (string input in inputList)
-        //    {
-        //        List<string> inputSplit = input.Split(' ').ToList();
-        //        if (input.StartsWith('$')) // Command
-        //        {
-        //            string command = inputSplit[1];
-        //            if (command == "cd") // change directory
-        //            {
-        //                string folder = inputSplit[2];
-        //                if (folder == "..")
-        //                {
-        //                    if (currentDirectory?.Parent != null)
-        //                        currentDirectory = currentDirectory.Parent;
-        //                    else
-        //                        throw new Exception("No parent exists");
-        //                }
-        //                else
-        //                {
-        //                    Directory? directory = directoryList.FirstOrDefault(w => w.Path == currentDirectory?.Path + folder);
-        //                    if (directory == null)
-        //                    {
-        //                        directory = new Directory { Name = folder, Path = currentDirectory?.Path + folder, Parent = currentDirectory };
-        //                        directoryList.Add(directory);
-        //                    }
-        //                    currentDirectory = directory;
-        //                }
-        //            }
-        //            else if (command == "ls") // list directory
-        //                continue;
-        //        }
-        //        else if (input.StartsWith("dir")) // directory
-        //        {
-        //            string folder = inputSplit[1];
-        //            Directory? directory = directoryList.FirstOrDefault(w => w.Path == currentDirectory?.Path + folder);
-        //            if (directory == null)
-        //            {
-        //                directory = new Directory { Name = folder, Path = currentDirectory?.Path + folder, Parent = currentDirectory };
-        //                directoryList.Add(directory);
-        //            }
-        //        }
-        //        else // file
-        //        {
-        //            int size = int.Parse(inputSplit[0]);
-        //            string name = inputSplit[1];
-        //            SystemFile? systemFile = currentDirectory?.FileList.FirstOrDefault(w => w.Name == name);
-        //            if (systemFile == null && currentDirectory != null)
-        //            {
-        //                systemFile = new SystemFile { Size = size, Name = name };
-        //                currentDirectory.FileList.Add(systemFile);
-        //            }
-        //        }
-        //    }
-
-        //}
-
-        //private class Directory
-        //{
-        //    public Directory()
-        //    {
-        //        FileList = new List<SystemFile>();
-        //    }
-
-        //    public string? Name { get; set; }
-        //    public string? Path { get; set; }
-        //    public Directory? Parent { get; set; }
-        //    public List<SystemFile> FileList { get; set; }
-        //}
-
-        //private class SystemFile
-        //{
-        //    public int Size { get; set; }
-        //    public string? Name { get; set; }
-        //}
-
         [TestMethod]
         public void Day7()
         {
@@ -366,7 +285,6 @@ namespace AdventCalendar2022
                 if (directorySize < minSize && directorySize >= 8381165)
                     minSize = directorySize;
             }
-
         }
 
         private class SystemFile
@@ -374,6 +292,68 @@ namespace AdventCalendar2022
             public string Name { get; set; }
             public int Size { get; set; }
             public string Path { get; set; }
+        }
+
+        [TestMethod]
+        public void Day8()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day8.txt").ToList();
+            List<Tree> treeList = new List<Tree>();
+            int x = 0, y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                input.Cast<char>().ToList().ForEach(e =>
+                {
+                    treeList.Add(new Tree { x = x, y = y, Height = int.Parse(e.ToString()) });
+                    x++;
+                });
+                y++;
+            }
+
+            int visibleTrees = 0;
+            foreach (Tree tree in treeList)
+            {
+                if (!treeList.Any(w => w.x < tree.x && w.y == tree.y && w.Height >= tree.Height) // Visible left?
+                    || !treeList.Any(w => w.x > tree.x && w.y == tree.y && w.Height >= tree.Height) // Visible right?
+                    || !treeList.Any(w => w.y < tree.y && w.x == tree.x && w.Height >= tree.Height) // Visible up?
+                    || !treeList.Any(w => w.y > tree.y && w.x == tree.x && w.Height >= tree.Height)) // Visible down?
+                    visibleTrees++;
+            }
+
+            int maxViewDistance = 0;
+            foreach (Tree tree in treeList)
+            {
+                int viewDistance = CheckDirectionViewDistance(treeList.Where(w => w.x < tree.x && w.y == tree.y).OrderByDescending(o => o.x).ToList(), tree.Height); // left
+                viewDistance *= CheckDirectionViewDistance(treeList.Where(w => w.x > tree.x && w.y == tree.y).OrderBy(o => o.x).ToList(), tree.Height); // right
+                viewDistance *= CheckDirectionViewDistance(treeList.Where(w => w.y < tree.y && w.x == tree.x).OrderByDescending(o => o.y).ToList(), tree.Height); // top
+                viewDistance *= CheckDirectionViewDistance(treeList.Where(w => w.y > tree.y && w.x == tree.x).OrderBy(o => o.y).ToList(), tree.Height); // bottom
+                if (maxViewDistance < viewDistance)
+                    maxViewDistance = viewDistance;
+            }
+        }
+
+        private class Tree
+        {
+            public int x { get; set; }
+            public int y { get; set; }
+            public int Height { get; set; }
+        }
+
+        private int CheckDirectionViewDistance(List<Tree> treeList, int height)
+        {
+            int viewDistance = 0;
+            foreach (Tree tree in treeList)
+            {
+                if (tree.Height >= height)
+                {
+                    viewDistance++;
+                    break;
+                }
+                else
+                    viewDistance++;
+            }
+            return viewDistance;
         }
     }
 }
