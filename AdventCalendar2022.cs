@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 
@@ -342,18 +344,112 @@ namespace AdventCalendar2022
 
         private int CheckDirectionViewDistance(List<Tree> treeList, int height)
         {
-            int viewDistance = 0;
-            foreach (Tree tree in treeList)
+            //int viewDistance = 0;
+            //foreach (Tree tree in treeList)
+            //{
+            //    viewDistance++;
+            //    if (tree.Height >= height)
+            //        break;
+            //}
+            //return viewDistance;
+
+            int viewDistance = treeList.FindIndex(w => w.Height >= height);
+            if (viewDistance == -1)
+                return treeList.Count();
+            else
+                return viewDistance + 1;
+        }
+
+        [TestMethod]
+        public void Day9_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day9.txt").ToList();
+            Point tailPoint = new Point(0, 0);
+            Point headPoint = new Point(0, 0);
+            List<Point> tailPositions = new List<Point>() { tailPoint };
+            foreach (string input in inputList)
             {
-                if (tree.Height >= height)
+                string[] inputSplit = input.Split(' ');
+                string moveDirection = inputSplit[0];
+                int moveCount = int.Parse(inputSplit[1]);
+                for (int i = 0; i < moveCount; i++)
                 {
-                    viewDistance++;
-                    break;
+                    if (moveDirection == "U")
+                        headPoint.Y++;
+                    else if (moveDirection == "D")
+                        headPoint.Y--;
+                    else if (moveDirection == "L")
+                        headPoint.X--;
+                    else if (moveDirection == "R")
+                        headPoint.X++;
+                    tailPoint = CalculateNewTailPoint(headPoint, tailPoint);
+                    if (!tailPositions.Contains(tailPoint))
+                        tailPositions.Add(tailPoint);
                 }
-                else
-                    viewDistance++;
             }
-            return viewDistance;
+        }
+
+        [TestMethod]
+        public void Day9_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day9.txt").ToList();
+            Point[] knotList = new Point[10];
+            List<Point> tailPositions = new List<Point>() { knotList[knotList.Count() - 1] };
+            foreach (string input in inputList)
+            {
+                string[] inputSplit = input.Split(' ');
+                string moveDirection = inputSplit[0];
+                int moveCount = int.Parse(inputSplit[1]);
+                for (int i = 0; i < moveCount; i++)
+                {
+                    if (moveDirection == "U")
+                        knotList[0].Y++;
+                    else if (moveDirection == "D")
+                        knotList[0].Y--;
+                    else if (moveDirection == "L")
+                        knotList[0].X--;
+                    else if (moveDirection == "R")
+                        knotList[0].X++;
+                    for (int k = 1; k < knotList.Count(); k++)
+                        knotList[k] = CalculateNewTailPoint(knotList[k - 1], knotList[k]);
+                    if (!tailPositions.Contains(knotList[knotList.Count() - 1]))
+                        tailPositions.Add(knotList[knotList.Count() - 1]);
+                }
+            }
+        }
+
+        private Point CalculateNewTailPoint(Point headPoint, Point tailPoint)
+        {
+            Point newTailpoint = new Point(tailPoint.X, tailPoint.Y);
+            if (Math.Abs(headPoint.Y - tailPoint.Y) > 1)
+            {
+                if (headPoint.Y > tailPoint.Y)
+                    newTailpoint.Y++;
+                else
+                    newTailpoint.Y--;
+
+                if (headPoint.X - tailPoint.X > 1)
+                    newTailpoint.X++;
+                else if (headPoint.X - tailPoint.X < -1)
+                    newTailpoint.X--;
+                else
+                    newTailpoint.X = headPoint.X;
+            }
+            else if (Math.Abs(headPoint.X - tailPoint.X) > 1)
+            {
+                if (headPoint.X > tailPoint.X)
+                    newTailpoint.X++;
+                else
+                    newTailpoint.X--;
+
+                if (headPoint.Y - tailPoint.Y > 1)
+                    newTailpoint.Y++;
+                else if (headPoint.Y - tailPoint.Y < -1)
+                    newTailpoint.Y--;
+                else
+                    newTailpoint.Y = headPoint.Y;
+            }
+            return newTailpoint;
         }
     }
 }
