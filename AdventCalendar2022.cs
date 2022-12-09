@@ -420,36 +420,35 @@ namespace AdventCalendar2022
 
         private Point CalculateNewTailPoint(Point headPoint, Point tailPoint)
         {
-            Point newTailpoint = new Point(tailPoint.X, tailPoint.Y);
             if (Math.Abs(headPoint.Y - tailPoint.Y) > 1)
             {
                 if (headPoint.Y > tailPoint.Y)
-                    newTailpoint.Y++;
+                    tailPoint.Y++;
                 else
-                    newTailpoint.Y--;
+                    tailPoint.Y--;
 
                 if (headPoint.X - tailPoint.X > 1)
-                    newTailpoint.X++;
+                    tailPoint.X++;
                 else if (headPoint.X - tailPoint.X < -1)
-                    newTailpoint.X--;
+                    tailPoint.X--;
                 else
-                    newTailpoint.X = headPoint.X;
+                    tailPoint.X = headPoint.X;
             }
             else if (Math.Abs(headPoint.X - tailPoint.X) > 1)
             {
                 if (headPoint.X > tailPoint.X)
-                    newTailpoint.X++;
+                    tailPoint.X++;
                 else
-                    newTailpoint.X--;
+                    tailPoint.X--;
 
                 if (headPoint.Y - tailPoint.Y > 1)
-                    newTailpoint.Y++;
+                    tailPoint.Y++;
                 else if (headPoint.Y - tailPoint.Y < -1)
-                    newTailpoint.Y--;
+                    tailPoint.Y--;
                 else
-                    newTailpoint.Y = headPoint.Y;
+                    tailPoint.Y = headPoint.Y;
             }
-            return newTailpoint;
+            return tailPoint;
         }
     }
 }
