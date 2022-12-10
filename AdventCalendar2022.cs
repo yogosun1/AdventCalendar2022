@@ -450,5 +450,43 @@ namespace AdventCalendar2022
             }
             return tailPoint;
         }
+
+        [TestMethod]
+        public void Day10()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day10.txt").ToList();
+            List<int> cycleList = new List<int> { 1 };
+            int x = 1;
+            foreach (string input in inputList)
+            {
+                string[] inputSplit = input.Split(' ');
+                string command = inputSplit[0];
+                if (command == "addx")
+                {
+                    cycleList.Add(x);
+                    x += int.Parse(inputSplit[1]);
+                    cycleList.Add(x);
+                }
+                else
+                    cycleList.Add(x);
+            }
+
+            int signalStrengthSum = 0;
+            for (int i = 19; i < 240; i += 40)
+                signalStrengthSum += (cycleList[i] * (i+1));
+
+            string image = string.Empty;
+            for (int i = 0; i < cycleList.Count; i++)
+            {
+                int horizontalPosition = i % 40;
+                if (horizontalPosition <= (cycleList[i] + 1) && horizontalPosition >= (cycleList[i] - 1))
+                    image += "#";
+                else
+                    image += ".";
+            }
+
+            for (int i = 0; i < image.Count()-1; i += 40)
+                Debug.WriteLine(image.Substring(i, 40));
+        }
     }
 }
