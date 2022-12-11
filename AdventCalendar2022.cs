@@ -3,7 +3,9 @@ using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Numerics;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace AdventCalendar2022
 {
@@ -473,7 +475,7 @@ namespace AdventCalendar2022
 
             int signalStrengthSum = 0;
             for (int i = 19; i < 240; i += 40)
-                signalStrengthSum += (cycleList[i] * (i+1));
+                signalStrengthSum += (cycleList[i] * (i + 1));
 
             string image = string.Empty;
             for (int i = 0; i < cycleList.Count; i++)
@@ -485,8 +487,105 @@ namespace AdventCalendar2022
                     image += ".";
             }
 
-            for (int i = 0; i < image.Count()-1; i += 40)
+            for (int i = 0; i < image.Count() - 1; i += 40)
                 Debug.WriteLine(image.Substring(i, 40));
+        }
+
+        [TestMethod]
+        public void Day11_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day11.txt").ToList();
+            List<Monkey> monkeyList = new List<Monkey>();
+            for (int i = 0; i < inputList.Count; i += 7)
+            {
+                List<string> operationSplit = inputList[i + 2].Split('=')[1].Trim().Split(' ').ToList();
+                Monkey monkey = new Monkey
+                {
+                    ItemList = inputList[i + 1].Split(':')[1].Split(',').Select(s => Int64.Parse(s.Trim())).ToList(),
+                    OperationLeft = operationSplit[0],
+                    OperationSign = operationSplit[1],
+                    OperationRight = operationSplit[2],
+                    TestDivider = int.Parse(inputList[i + 3].Trim().Split(' ')[3]),
+                    TrueMonkeyIdThrow = int.Parse(inputList[i + 4].Trim().Split(' ')[5]),
+                    FalseMonkeyIdThrow = int.Parse(inputList[i + 5].Trim().Split(' ')[5]),
+                };
+                monkeyList.Add(monkey);
+            }
+            for (int round = 1; round <= 20; round++)
+            {
+                foreach (Monkey monkey in monkeyList)
+                {
+                    foreach (Int64 item in monkey.ItemList.ToArray())
+                    {
+                        Int64 leftValue = monkey.OperationLeft == "old" ? item : Int64.Parse(monkey.OperationLeft);
+                        Int64 rightValue = monkey.OperationRight == "old" ? item : Int64.Parse(monkey.OperationRight);
+                        Int64 worryLevel = monkey.OperationSign == "*" ? leftValue * rightValue : leftValue + rightValue;
+                        worryLevel /= 3;
+                        if (worryLevel % monkey.TestDivider == 0)
+                            monkeyList[monkey.TrueMonkeyIdThrow].ItemList.Add(worryLevel);
+                        else
+                            monkeyList[monkey.FalseMonkeyIdThrow].ItemList.Add(worryLevel);
+                        monkey.InspectionCount++;
+                        monkey.ItemList.Remove(item);
+                    }
+                }
+            }
+            int monkeyBusiness = monkeyList.Select(s => s.InspectionCount).OrderByDescending(o => o).Take(2).Aggregate((sum, next) => sum * next);
+        }
+
+        [TestMethod]
+        public void Day11_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day11.txt").ToList();
+            List<Monkey> monkeyList = new List<Monkey>();
+            for (int i = 0; i < inputList.Count; i += 7)
+            {
+                List<string> operationSplit = inputList[i + 2].Split('=')[1].Trim().Split(' ').ToList();
+                Monkey monkey = new Monkey
+                {
+                    ItemList = inputList[i + 1].Split(':')[1].Split(',').Select(s => Int64.Parse(s.Trim())).ToList(),
+                    OperationLeft = operationSplit[0],
+                    OperationSign = operationSplit[1],
+                    OperationRight = operationSplit[2],
+                    TestDivider = int.Parse(inputList[i + 3].Trim().Split(' ')[3]),
+                    TrueMonkeyIdThrow = int.Parse(inputList[i + 4].Trim().Split(' ')[5]),
+                    FalseMonkeyIdThrow = int.Parse(inputList[i + 5].Trim().Split(' ')[5]),
+                };
+                monkeyList.Add(monkey);
+            }
+            int leastCommonMultiple = monkeyList.Select(s => s.TestDivider).Aggregate((sum, next) => sum * next); // all dividers are prime numbers
+            for (int round = 1; round <= 10000; round++)
+            {
+                foreach (Monkey monkey in monkeyList)
+                {
+                    foreach (Int64 item in monkey.ItemList.ToArray())
+                    {
+                        Int64 leftValue = monkey.OperationLeft == "old" ? item : Int64.Parse(monkey.OperationLeft);
+                        Int64 rightValue = monkey.OperationRight == "old" ? item : Int64.Parse(monkey.OperationRight);
+                        Int64 worryLevel = monkey.OperationSign == "*" ? leftValue * rightValue : leftValue + rightValue;
+                        worryLevel %= leastCommonMultiple;
+                        if (worryLevel % monkey.TestDivider == 0)
+                            monkeyList[monkey.TrueMonkeyIdThrow].ItemList.Add(worryLevel);
+                        else
+                            monkeyList[monkey.FalseMonkeyIdThrow].ItemList.Add(worryLevel);
+                        monkey.InspectionCount++;
+                        monkey.ItemList.Remove(item);
+                    }
+                }
+            }
+            Int64 monkeyBusiness = monkeyList.Select(s => (Int64)s.InspectionCount).OrderByDescending(o => o).Take(2).Aggregate((Int64 sum, Int64 next) => sum * next);
+        }
+
+        private class Monkey
+        {
+            public List<Int64> ItemList { get; set; }
+            public string OperationLeft { get; set; }
+            public string OperationRight { get; set; }
+            public string OperationSign { get; set; }
+            public int TestDivider { get; set; }
+            public int TrueMonkeyIdThrow { get; set; }
+            public int FalseMonkeyIdThrow { get; set; }
+            public int InspectionCount { get; set; }
         }
     }
 }
