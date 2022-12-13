@@ -587,5 +587,144 @@ namespace AdventCalendar2022
             public int FalseMonkeyIdThrow { get; set; }
             public int InspectionCount { get; set; }
         }
+
+        [TestMethod]
+        public void Day12_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day12.txt").ToList();
+            List<Location> locationList = new List<Location>();
+            int x = 0;
+            int y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                foreach (char height in input)
+                {
+                    locationList.Add(new Location { X = x, Y = y, Height = height == 'S' ? 'a' : height == 'E' ? 'z' : height, IsEnd = height == 'E', IsVisited = false, MinDistance = height == 'S' ? 0 : int.MaxValue });
+                    x++;
+                }
+                y++;
+            }
+            Location current = null;
+            while (current == null || !current.IsEnd)
+            {
+                current = locationList.Where(w => !w.IsVisited).OrderBy(o => o.MinDistance).First();
+                current.IsVisited = true;
+                locationList.Where(w => (Math.Abs(w.X - current.X) + Math.Abs(w.Y - current.Y)) == 1 && current.Height >= (w.Height - 1) && w.MinDistance > current.MinDistance)
+                        .ToList().ForEach(e => e.MinDistance = current.MinDistance + 1);
+            }
+        }
+
+        [TestMethod]
+        public void Day12_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day12.txt").ToList();
+            List<Location> locationList = new List<Location>();
+            int x = 0;
+            int y = 0;
+            foreach (string input in inputList)
+            {
+                x = 0;
+                foreach (char height in input)
+                {
+                    locationList.Add(new Location { X = x, Y = y, Height = height == 'S' ? 'a' : height == 'E' ? 'z' : height, IsEnd = height == 'E', IsVisited = false, MinDistance = int.MaxValue });
+                    x++;
+                }
+                y++;
+            }
+            List<int> minDistanceList = new List<int>();
+            Location current = null;
+            foreach (Location start in locationList.Where(w => w.Height == 'a'))
+            {
+                start.MinDistance = 0;
+                current = null;
+                while (current == null || !current.IsEnd)
+                {
+                    current = locationList.Where(w => !w.IsVisited).OrderBy(o => o.MinDistance).First();
+                    if (current.MinDistance == int.MaxValue)
+                        break;
+                    current.IsVisited = true;
+                    locationList.Where(w => (Math.Abs(w.X - current.X) + Math.Abs(w.Y - current.Y)) == 1 && current.Height >= (w.Height - 1) && w.MinDistance > current.MinDistance)
+                        .ToList().ForEach(e => e.MinDistance = current.MinDistance + 1);
+                }
+                minDistanceList.Add(current.MinDistance);
+                locationList.ForEach(e =>
+                {
+                    e.MinDistance = int.MaxValue;
+                    e.IsVisited = false;
+                });
+            }
+            int minStart = minDistanceList.Min();
+        }
+
+        private class Location
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int Height { get; set; }
+            public bool IsEnd { get; set; }
+            public bool IsVisited { get; set; }
+            public int MinDistance { get; set; }
+        }
+
+        [TestMethod]
+        public void Day13_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
+            List<PacketPair> packetPairList = new List<PacketPair>();
+            int pairCounter = 0;
+            for (int i = 1; i <= inputList.Count(); i += 3)
+            {
+                pairCounter++;
+                packetPairList.Add(new PacketPair
+                {
+                    Index = pairCounter,
+                    //LeftList = new String(inputList[0].Where(w => char.IsDigit(w) || w == ',').ToArray()).Split(',').Where(w => w != String.Empty).Select(s => int.Parse(s)).ToList(),
+                    //RightList = new String(inputList[1].Where(w => char.IsDigit(w) || w == ',').ToArray()).Split(',').Where(w => w != String.Empty).Select(s => int.Parse(s)).ToList(),
+                });
+            }
+            int indicesSum = 0;
+            foreach (PacketPair packetPair in packetPairList)
+            {
+
+                if (packetPair.LeftList.Count() == 0)
+                {
+                    if (packetPair.RightList.Count() != 0)
+                    {
+                        indicesSum++;
+                        continue;
+                    }
+                }
+
+                for (int i = 0; i <= packetPair.LeftList.Count(); i++)
+                {
+                    
+                }
+            }
+        }
+
+        private List<PacketValue> ParsePacketValueList(string data)
+        {
+            List<PacketValue> packetValueList = new List<PacketValue>();
+            foreach (char c in data)
+            {
+                if (c == '[')
+
+            }
+            return packetValueList;
+        }
+
+        private class PacketPair
+        {
+            public List<int> LeftList { get; set; }
+            public List<int> RightList { get; set; }
+            public int Index { get; set; }
+        }
+
+        private class PacketValue
+        {
+            public List<PacketValue> PacketValueList { get; set; }
+            public int? Value { get; set; }
+        }
     }
 }
