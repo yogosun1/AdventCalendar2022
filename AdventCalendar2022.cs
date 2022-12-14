@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -665,6 +666,294 @@ namespace AdventCalendar2022
             public bool IsEnd { get; set; }
             public bool IsVisited { get; set; }
             public int MinDistance { get; set; }
+        }
+
+        #region Day13 not complete
+        [TestMethod]
+        public void Day13_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
+            List<PacketPair> packetPairList = new List<PacketPair>();
+            int pairCounter = 0;
+            for (int i = 1; i <= inputList.Count(); i += 3)
+            {
+                pairCounter++;
+                packetPairList.Add(new PacketPair
+                {
+                    Index = pairCounter,
+                    //LeftList = new String(inputList[0].Where(w => char.IsDigit(w) || w == ',').ToArray()).Split(',').Where(w => w != String.Empty).Select(s => int.Parse(s)).ToList(),
+                    //RightList = new String(inputList[1].Where(w => char.IsDigit(w) || w == ',').ToArray()).Split(',').Where(w => w != String.Empty).Select(s => int.Parse(s)).ToList(),
+                });
+            }
+            int indicesSum = 0;
+            foreach (PacketPair packetPair in packetPairList)
+            {
+
+                if (packetPair.LeftList.Count() == 0)
+                {
+                    if (packetPair.RightList.Count() != 0)
+                    {
+                        indicesSum++;
+                        continue;
+                    }
+                }
+
+                for (int i = 0; i <= packetPair.LeftList.Count(); i++)
+                {
+
+                }
+            }
+        }
+
+        private List<PacketValue> ParsePacketValueList(string data)
+        {
+            List<PacketValue> packetValueList = new List<PacketValue>();
+            foreach (char c in data)
+            {
+                //if (c == '[')
+
+            }
+            return packetValueList;
+        }
+
+        private class PacketPair
+        {
+            public List<int> LeftList { get; set; }
+            public List<int> RightList { get; set; }
+            public int Index { get; set; }
+        }
+
+        private class PacketValue
+        {
+            public List<PacketValue> PacketValueList { get; set; }
+            public int? Value { get; set; }
+        }
+        #endregion
+
+        [TestMethod]
+        public void Day14_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day14.txt").ToList();
+            List<Coordinate> coordinateList = new List<Coordinate>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(" -> ").ToList();
+                string start = string.Empty;
+                foreach (string end in inputSplit)
+                {
+                    if (!string.IsNullOrEmpty(start))
+                    {
+                        List<string> startSplit = start.Split(',').ToList();
+                        List<string> endSplit = end.Split(',').ToList();
+                        int startX = int.Parse(startSplit[0]);
+                        int startY = int.Parse(startSplit[1]);
+                        int endX = int.Parse(endSplit[0]);
+                        int endY = int.Parse(endSplit[1]);
+                        if (startX != endX)
+                        {
+                            for (int i = Math.Min(startX, endX); i <= Math.Max(startX, endX); i++)
+                            {
+                                Coordinate startCoordinate = coordinateList.FirstOrDefault(w => w.X == i && w.Y == startY);
+                                if (startCoordinate == null)
+                                {
+                                    startCoordinate = new Coordinate { X = i, Y = startY };
+                                    coordinateList.Add(startCoordinate);
+                                }
+                                startCoordinate.Rock = true;
+                            }
+                        }
+                        else
+                        {
+                            for (int i = Math.Min(startY, endY); i <= Math.Max(startY, endY); i++)
+                            {
+                                Coordinate startCoordinate = coordinateList.FirstOrDefault(w => w.X == startX && w.Y == i);
+                                if (startCoordinate == null)
+                                {
+                                    startCoordinate = new Coordinate { X = startX, Y = i };
+                                    coordinateList.Add(startCoordinate);
+                                }
+                                startCoordinate.Rock = true;
+                            }
+                        }
+                    }
+                    start = end;
+                }
+            }
+            int maxDepth = coordinateList.Max(m => m.Y);
+            bool endReached = false;
+            while (!endReached)
+            {
+                int currentX = 500;
+                int currentY = 0;
+                bool sandEndReached = false;
+                while (!sandEndReached)
+                {
+                    if (maxDepth + 10 <= currentY)
+                    {
+                        sandEndReached = true;
+                        endReached = true;
+                        break;
+                    }
+                    Coordinate next = coordinateList.FirstOrDefault(w => w.X == currentX && w.Y == currentY + 1 && (w.Sand || w.Rock));
+                    if (next == null)
+                    {
+                        currentY = currentY + 1;
+                        continue;
+                    }
+                    next = coordinateList.FirstOrDefault(w => w.X == currentX - 1 && w.Y == currentY + 1 && (w.Sand || w.Rock));
+                    if (next == null)
+                    {
+                        currentY = currentY + 1;
+                        currentX = currentX - 1;
+                        continue;
+                    }
+                    next = coordinateList.FirstOrDefault(w => w.X == currentX + 1 && w.Y == currentY + 1 && (w.Sand || w.Rock));
+                    if (next == null)
+                    {
+                        currentY = currentY + 1;
+                        currentX = currentX + 1;
+                        continue;
+                    }
+                    else
+                    {
+                        coordinateList.Add(new Coordinate { X = currentX, Y = currentY, Sand = true });
+                        sandEndReached = true;
+                    }
+                }
+            }
+            PrintCave(coordinateList);
+            int sandCount = coordinateList.Where(w => w.Sand).Count();
+        }
+
+        [TestMethod]
+        public void Day14_2() 
+        {
+            // this took 20-30 minutes to run. Probably better to use two-dimensional array since its easier to find next coordinate
+            List<string> inputList = File.ReadAllLines(@"Input\Day14.txt").ToList();
+            List<Coordinate> coordinateList = new List<Coordinate>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(" -> ").ToList();
+                string start = string.Empty;
+                foreach (string end in inputSplit)
+                {
+                    if (!string.IsNullOrEmpty(start))
+                    {
+                        List<string> startSplit = start.Split(',').ToList();
+                        List<string> endSplit = end.Split(',').ToList();
+                        int startX = int.Parse(startSplit[0]);
+                        int startY = int.Parse(startSplit[1]);
+                        int endX = int.Parse(endSplit[0]);
+                        int endY = int.Parse(endSplit[1]);
+                        if (startX != endX)
+                        {
+                            for (int i = Math.Min(startX, endX); i <= Math.Max(startX, endX); i++)
+                            {
+                                Coordinate startCoordinate = coordinateList.FirstOrDefault(w => w.X == i && w.Y == startY);
+                                if (startCoordinate == null)
+                                {
+                                    startCoordinate = new Coordinate { X = i, Y = startY };
+                                    coordinateList.Add(startCoordinate);
+                                }
+                                startCoordinate.Rock = true;
+                            }
+                        }
+                        else
+                        {
+                            for (int i = Math.Min(startY, endY); i <= Math.Max(startY, endY); i++)
+                            {
+                                Coordinate startCoordinate = coordinateList.FirstOrDefault(w => w.X == startX && w.Y == i);
+                                if (startCoordinate == null)
+                                {
+                                    startCoordinate = new Coordinate { X = startX, Y = i };
+                                    coordinateList.Add(startCoordinate);
+                                }
+                                startCoordinate.Rock = true;
+                            }
+                        }
+                    }
+                    start = end;
+                }
+            }
+            int maxDepth = coordinateList.Max(m => m.Y);
+            for (int x = 500 - (maxDepth + 5); x <= 500 + (maxDepth + 5); x++)
+                coordinateList.Add(new Coordinate { X = x, Y = maxDepth + 2, Rock = true });
+            bool endReached = false;
+            while (!endReached)
+            {
+                int currentX = 500;
+                int currentY = 0;
+                bool sandEndReached = false;
+                while (!sandEndReached)
+                {
+                    Coordinate next = coordinateList.FirstOrDefault(w => w.X == currentX && w.Y == currentY + 1 && (w.Sand || w.Rock));
+                    if (next == null)
+                    {
+                        currentY = currentY + 1;
+                        continue;
+                    }
+                    next = coordinateList.FirstOrDefault(w => w.X == currentX - 1 && w.Y == currentY + 1 && (w.Sand || w.Rock));
+                    if (next == null)
+                    {
+                        currentY = currentY + 1;
+                        currentX = currentX - 1;
+                        continue;
+                    }
+                    next = coordinateList.FirstOrDefault(w => w.X == currentX + 1 && w.Y == currentY + 1 && (w.Sand || w.Rock));
+                    if (next == null)
+                    {
+                        currentY = currentY + 1;
+                        currentX = currentX + 1;
+                        continue;
+                    }
+                    else
+                    {
+                        coordinateList.Add(new Coordinate { X = currentX, Y = currentY, Sand = true });
+                        sandEndReached = true;
+                        if (currentY == 0)
+                        {
+                            endReached = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            PrintCave(coordinateList);
+            int sandCount = coordinateList.Where(w => w.Sand).Count();
+        }
+
+        private void PrintCave(List<Coordinate> coordinateList)
+        {
+            for (int y = 0; y <= coordinateList.Max(m => m.Y) + 5; y++)
+            {
+                string line = string.Empty;
+                for (int x = coordinateList.Min(m => m.X) - 5; x <= coordinateList.Max(m => m.X) + 5; x++)
+                {
+                    Coordinate coordinate = coordinateList.FirstOrDefault(w => w.X == x && w.Y == y);
+                    if (x == 500 && y == 0)
+                        line += "+";
+                    else if (coordinate == null)
+                        line += ".";
+                    else if (coordinate.Rock)
+                        line += "#";
+                    else if (coordinate.Sand)
+                        line += "O";
+                }
+                Debug.Print(line);
+            }
+        }
+
+        private class Coordinate
+        {
+            public Coordinate()
+            {
+                Sand = false;
+                Rock = false;
+            }
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool Sand { get; set; }
+            public bool Rock { get; set; }
         }
     }
 }
