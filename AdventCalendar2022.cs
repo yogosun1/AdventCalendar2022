@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Numerics;
@@ -668,82 +669,11 @@ namespace AdventCalendar2022
             public int MinDistance { get; set; }
         }
 
-        #region Day13 not complete
-
-        [TestMethod]
-        public void Day13_1_1()
-        {
-            List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
-            List<PacketPair1> packetPairList = new List<PacketPair1>();
-            int pairCounter = 0;
-            for (int i = 0; i < inputList.Count(); i += 3)
-            {
-                pairCounter++;
-                packetPairList.Add(new PacketPair1
-                {
-                    Index = pairCounter,
-                    LeftList = new String(inputList[i].Where(w => char.IsDigit(w) || w == ',').ToArray()).Split(',').Where(w => w != String.Empty).Select(s => int.Parse(s)).ToList(),
-                    RightList = new String(inputList[i + 1].Where(w => char.IsDigit(w) || w == ',').ToArray()).Split(',').Where(w => w != String.Empty).Select(s => int.Parse(s)).ToList(),
-                    LeftLength = inputList[i].Length,
-                    RightLength = inputList[i + 1].Length,
-                });
-            }
-            int indicesSum = 0;
-            foreach (PacketPair1 packetPair in packetPairList)
-            {
-                if (packetPair.LeftList.Count() == 0 && packetPair.RightList.Count() != 0)
-                {
-                    if (packetPair.LeftLength < packetPair.RightLength)
-                        indicesSum += packetPair.Index;
-                    continue;
-                }
-                else if (packetPair.LeftList.Count() == 0)
-                {
-                    indicesSum += packetPair.Index;
-                    continue;
-                }
-                else if (packetPair.RightList.Count() == 0)
-                    continue;
-
-                for (int i = 0; i < Math.Max(packetPair.LeftList.Count(), packetPair.RightList.Count()); i++)
-                {
-                    if (packetPair.LeftList.Count() < (i + 1))
-                    {
-                        indicesSum += packetPair.Index;
-                        break; // correct order
-                    }
-                    else if (packetPair.RightList.Count() < (i + 1))
-                        break; // not in right order
-                    else if (packetPair.LeftList[i] > packetPair.RightList[i])
-                        break; // not in right order
-                    else if (packetPair.LeftList[i] == packetPair.RightList[i])
-                        continue; // equal value
-                    else if (packetPair.LeftList[i] < packetPair.RightList[i])
-                    {
-                        indicesSum += packetPair.Index;
-                        break; // correct order
-                    }
-                }
-            }
-        }
-
-        private class PacketPair1
-        {
-            public List<int> LeftList { get; set; }
-            public List<int> RightList { get; set; }
-            public int LeftLength { get; set; }
-            public int RightLength { get; set; }
-            public int Index { get; set; }
-        }
-
         [TestMethod]
         public void Day13_1()
         {
             List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
             List<PacketPair> packetPairList = new List<PacketPair>();
-
-            //List<PacketValue> packetValueList = ParsePacketValueList("[[[],10,[[6],[]],3,1]]");
-
             int pairCounter = 0;
             for (int i = 0; i < inputList.Count(); i += 3)
             {
@@ -751,101 +681,165 @@ namespace AdventCalendar2022
                 packetPairList.Add(new PacketPair
                 {
                     Index = pairCounter,
-                    LeftList = ParsePacketValueList(inputList[i]),
-                    RightList = ParsePacketValueList(inputList[i + 1]),
+                    LeftList = ParsePacketValueList(inputList[i].Substring(1, inputList[i].Length - 2)),
+                    RightList = ParsePacketValueList(inputList[i + 1].Substring(1, inputList[i + 1].Length - 2)),
                 });
             }
 
+            //PrintPackages1(packetPairList);
+
             int indicesSum = 0;
+            List<int> indexList = new List<int>();
             foreach (PacketPair packetPair in packetPairList)
             {
-
-                //int result = ComparePackets(packetPair.LeftList, )
+                int result = ComparePackets(packetPair.LeftList, packetPair.RightList);
+                if (result == 1)
+                {
+                    indicesSum += packetPair.Index;
+                    indexList.Add(packetPair.Index);
+                }
             }
+        }
+
+        [TestMethod]
+        public void Day13_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day13.txt").ToList();
+            List<Packet> packetList = new List<Packet>();
+            foreach (string input in inputList)
+            {
+                if (string.IsNullOrEmpty(input))
+                    continue;
+                packetList.Add(new Packet { PacketValueList = ParsePacketValueList(input.Substring(1, input.Length - 2)) });
+            }
+            List<Packet> orderedPacketPairList = new List<Packet>();
+            packetList.Add(new Packet { IsDecoderPacket = true, PacketValueList = ParsePacketValueList("[2]") });
+            packetList.Add(new Packet { IsDecoderPacket = true, PacketValueList = ParsePacketValueList("[6]") });
+            foreach (Packet packet in packetList)
+            {
+                if (orderedPacketPairList.Count() == 0)
+                {
+                    packet.Index = 1;
+                    orderedPacketPairList.Add(packet);
+                }
+                else
+                {
+                    packet.Index = orderedPacketPairList.Max(m => m.Index) + 1;
+                    foreach (Packet orderedPacket in orderedPacketPairList.OrderBy(o => o.Index))
+                    {
+                        if (ComparePackets(packet.PacketValueList, orderedPacket.PacketValueList) == 1)
+                        {
+                            packet.Index = orderedPacket.Index;
+                            break;
+                        }
+                    }
+                    orderedPacketPairList.Where(w => w.Index >= packet.Index).ToList().ForEach(e => e.Index++);
+                    orderedPacketPairList.Add(packet);
+                }
+            }
+            int decoderKey = (int)orderedPacketPairList.Where(w => w.IsDecoderPacket).Select(s => s.Index).Aggregate((sum, next) => sum * next);
+            //PrintPackages2(orderedPacketPairList.OrderBy(o => o.Index).ToList());
+        }
+
+        private void PrintPackages1(List<PacketPair> packetPairList)
+        {
+            foreach (PacketPair packetPair in packetPairList)
+            {
+                Debug.WriteLine(GetPacketString(packetPair.LeftList));
+                Debug.WriteLine(GetPacketString(packetPair.RightList));
+                Debug.WriteLine(string.Empty);
+            }
+        }
+
+        private void PrintPackages2(List<Packet> packetList)
+        {
+            foreach (Packet packet in packetList)
+                Debug.WriteLine(GetPacketString(packet.PacketValueList));
+        }
+
+        private string GetPacketString(List<PacketValue> packetValueList)
+        {
+            string packetString = "[";
+            bool isFirst = true;
+            foreach (PacketValue packetValue in packetValueList)
+            {
+                if (!isFirst)
+                    packetString += ",";
+                if (packetValue.Value != null)
+                    packetString += packetValue.Value;
+                else if (packetValue.PacketValueList != null)
+                    packetString += GetPacketString(packetValue.PacketValueList);
+                isFirst = false;
+            }
+            packetString += "]";
+            return packetString;
         }
 
         private int ComparePackets(List<PacketValue> leftList, List<PacketValue> rightList)
         {
-            int result = 2; // 0 = false, 1 = true, 2 = continue
-            for (int i = 0; i < leftList.Count(); i++)
-            {
-                PacketValue left = leftList[i];
-                PacketValue right = leftList[i];
-                if (left.Value != null && right.Value != null)
-                {
-                    if (left.Value < right.Value)
-                        result = 1;
-                    else if (left.Value > right.Value)
-                        result = 0;
-                }
-                else if (left.Value != null)
-                {
-                    if (right.PacketValueList.Count() == 0)
-                        result = 0;
-                    else
-                    {
-                        int? rightValue = FindNextPacketValue(right.PacketValueList.First());
-                        if (rightValue == null)
-                            result = 0;
-                        else if (left.Value < rightValue)
-                            result = 1;
-                        else if (left.Value > rightValue)
-                            result = 0;
-                    }
-                }
-                else if (right.Value != null)
-                {
-
-                }
-            }
-            return result;
-        }
-
-        private int? FindNextPacketValue(PacketValue packetValue)
-        {
-            int? value = null;
-            if (packetValue.Value != null)
-                value = packetValue.Value;
+            int result = -1; // 0 = false, 1 = true, 2 = continue; -1 = error
+            if (leftList.Count() == 0 && rightList.Count() == 0)
+                result = 2;
+            else if (leftList.Count() == 0)
+                result = 1;
+            else if (rightList.Count() == 0)
+                result = 0;
             else
             {
-                foreach (PacketValue p in packetValue.PacketValueList)
+                for (int i = 0; i < Math.Max(leftList.Count(), rightList.Count()); i++)
                 {
-                    value = FindNextPacketValue(p);
-                    if (value != null)
+                    if (i >= rightList.Count())
+                        result = 0;
+                    else if (i >= leftList.Count())
+                        result = 1;
+                    else
+                    {
+                        PacketValue left = leftList[i];
+                        PacketValue right = rightList[i];
+                        if (left.Value != null && right.Value != null)
+                        {
+                            if (left.Value < right.Value)
+                                result = 1;
+                            else if (left.Value > right.Value)
+                                result = 0;
+                            else
+                                result = 2;
+                        }
+                        else if (left.Value != null)
+                        {
+                            if (right.PacketValueList.Count() == 0 || right.PacketValueList == null)
+                                result = 0;
+                            else
+                                result = ComparePackets(new List<PacketValue> { new PacketValue { Value = left.Value } }, right.PacketValueList);
+                        }
+                        else if (right.Value != null)
+                        {
+                            if (left.PacketValueList.Count() == 0 || left.PacketValueList == null)
+                                result = 1;
+                            else
+                                result = ComparePackets(left.PacketValueList, new List<PacketValue> { new PacketValue { Value = right.Value } });
+                        }
+                        else
+                        {
+                            if ((left.PacketValueList.Count() == 0 || left.PacketValueList == null) && (right.PacketValueList.Count() == 0 || right.PacketValueList == null))
+                                result = 2;
+                            else if (left.PacketValueList.Count() == 0 || left.PacketValueList == null)
+                                result = 1;
+                            else if (right.PacketValueList.Count() == 0 || right.PacketValueList == null)
+                                result = 0;
+                            else
+                                result = ComparePackets(left.PacketValueList, right.PacketValueList);
+                        }
+                    }
+                    if (result != 2)
                         break;
                 }
             }
-            return value;
+            if (result == -1)
+                throw new Exception("Invalid result");
+            return result;
         }
 
-        //private int ComparePackets(string left, string right)
-        //{
-        //    //string leftSide = left.Substring(1, left.Length - 2);
-        //    //string rightSide = left.Substring(1, left.Length - 2);
-        //    //int result = 2; // 0 = false, 1 = true, 2 = continue
-
-        //    //while (result == 2)
-        //    //{
-        //    //    if (leftSide.StartsWith("["))
-        //    //    {
-        //    //        ComparePackets(leftSide.)
-        //    //    }
-        //    //}
-
-        //    if (char.IsDigit(left[0]) && char.IsDigit(right[0]))
-        //    {
-        //        int leftInt = int.Parse(left[0].ToString());
-        //        int rightInt = int.Parse(left[0].ToString());
-        //        if (leftInt < rightInt)
-        //            return 1;
-        //        if (leftInt > rightInt)
-        //            return 0;
-        //        else
-        //            return 2;
-        //    }
-        //}
-
-        //[[[],10,[[6],[]],3,1]]
         private List<PacketValue> ParsePacketValueList(string data)
         {
             //Debug.Print(data);
@@ -908,12 +902,22 @@ namespace AdventCalendar2022
             public int Index { get; set; }
         }
 
+        private class Packet
+        {
+            public Packet()
+            {
+                IsDecoderPacket = false;
+            }
+            public List<PacketValue> PacketValueList { get; set; }
+            public int? Index { get; set; }
+            public bool IsDecoderPacket { get; set; }
+        }
+
         private class PacketValue
         {
             public List<PacketValue> PacketValueList { get; set; }
             public int? Value { get; set; }
         }
-        #endregion
 
         [TestMethod]
         public void Day14_1()
@@ -1011,7 +1015,7 @@ namespace AdventCalendar2022
         }
 
         [TestMethod]
-        public void Day14_2() 
+        public void Day14_2()
         {
             // this took 20-30 minutes to run. Probably better to use two-dimensional array since its easier to find next coordinate
             List<string> inputList = File.ReadAllLines(@"Input\Day14.txt").ToList();
@@ -1142,3 +1146,4 @@ namespace AdventCalendar2022
         }
     }
 }
+
