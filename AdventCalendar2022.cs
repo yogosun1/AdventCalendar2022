@@ -1,3 +1,4 @@
+using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -1017,7 +1018,6 @@ namespace AdventCalendar2022
         [TestMethod]
         public void Day14_2()
         {
-            // this took 20-30 minutes to run. Probably better to use two-dimensional array since its easier to find next coordinate
             List<string> inputList = File.ReadAllLines(@"Input\Day14.txt").ToList();
             List<Coordinate> coordinateList = new List<Coordinate>();
             foreach (string input in inputList)
@@ -1143,6 +1143,119 @@ namespace AdventCalendar2022
             public int Y { get; set; }
             public bool Sand { get; set; }
             public bool Rock { get; set; }
+        }
+
+        [TestMethod]
+        public void Day15_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day15.txt").ToList();
+            List<Day15Coordinate> deviceList = new List<Day15Coordinate>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split('=').ToList();
+                int sensorX = int.Parse(inputSplit[1].Substring(0, inputSplit[1].Length - 3));
+                int sensorY = int.Parse(inputSplit[2].Substring(0, inputSplit[2].Length - 24));
+                int beaconX = int.Parse(inputSplit[3].Substring(0, inputSplit[3].Length - 3));
+                int beaconY = int.Parse(inputSplit[4]);
+                Sensor sensor = new Sensor { X = sensorX, Y = sensorY };
+                Day15Coordinate beacon = deviceList.FirstOrDefault(w => w.X == beaconX && w.Y == beaconY);
+                if (beacon == null)
+                {
+                    beacon = new Beacon { X = beaconX, Y = beaconY };
+                    deviceList.Add(beacon);
+                }
+                sensor.Beacon = (Beacon)beacon;
+                deviceList.Add(sensor);
+            }
+
+            List<Range> rangeList = new List<Range>();
+            int row = 2000000;
+            foreach (Sensor sensor in deviceList.Where(w => w is Sensor))
+            {
+                int distance = Math.Abs(sensor.X - sensor.Beacon.X) + Math.Abs(sensor.Y - sensor.Beacon.Y);
+                if ((sensor.Y - distance) <= row && (sensor.Y + distance) >= row)
+                {
+                    int xDistance = distance - Math.Abs(row - sensor.Y);
+                    int xMin = sensor.X - xDistance;
+                    int xMax = sensor.X + xDistance;
+                    rangeList.Add(new Range { Start = xMin, End = xMax });
+                }
+            }
+            int count = 0;
+            for (int i = rangeList.Min(m => m.Start); i <= rangeList.Max(m => m.End); i++)
+            {
+                if (rangeList.Any(a => a.Start <= i && a.End >= i) && !deviceList.Any(w => w.X == i && w.Y == row))
+                    count++;
+            }
+        }
+
+        [TestMethod]
+        public void Day15_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day15.txt").ToList();
+            List<Day15Coordinate> deviceList = new List<Day15Coordinate>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split('=').ToList();
+                int sensorX = int.Parse(inputSplit[1].Substring(0, inputSplit[1].Length - 3));
+                int sensorY = int.Parse(inputSplit[2].Substring(0, inputSplit[2].Length - 24));
+                int beaconX = int.Parse(inputSplit[3].Substring(0, inputSplit[3].Length - 3));
+                int beaconY = int.Parse(inputSplit[4]);
+                Sensor sensor = new Sensor { X = sensorX, Y = sensorY };
+                Day15Coordinate beacon = deviceList.FirstOrDefault(w => w.X == beaconX && w.Y == beaconY);
+                if (beacon == null)
+                    beacon = new Beacon { X = beaconX, Y = beaconY };
+                sensor.Beacon = (Beacon)beacon;
+                deviceList.Add(sensor);
+            }
+            Int64 tuningFrequency = 0;
+            int maxXY = 4000000;
+            List<Range> rangeList = new List<Range>();
+            for (int y = 0; y <= maxXY; y++)
+            {
+                rangeList.Clear();
+                foreach (Sensor sensor in deviceList.Where(w => w is Sensor))
+                {
+                    int distance = Math.Abs(sensor.X - sensor.Beacon.X) + Math.Abs(sensor.Y - sensor.Beacon.Y);
+                    if ((sensor.Y - distance) <= y && (sensor.Y + distance) >= y)
+                    {
+                        int xDistance = distance - Math.Abs(y - sensor.Y);
+                        int xMin = sensor.X - xDistance;
+                        int xMax = sensor.X + xDistance;
+                        rangeList.Add(new Range { Start = xMin, End = xMax });
+                    }
+                }
+                for (int x = 0; x <= maxXY; x++)
+                {
+                    int max = rangeList.Where(w => w.Start <= x && w.End >= x).Select(s => s.End).DefaultIfEmpty(-1).Max();
+                    if (max == -1)
+                        tuningFrequency = (Int64)x * 4000000 + (Int64)y;
+                    else
+                        x = max;
+                }
+            }
+        }
+
+        private class Day15Coordinate
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+        }
+
+        private class Beacon : Day15Coordinate
+        {
+
+        }
+
+        private class Sensor : Day15Coordinate
+        {
+            public Beacon Beacon { get; set; }
+        }
+
+        private class Range
+        {
+            public int Start { get; set; }
+            public int End { get; set; }
         }
     }
 }
