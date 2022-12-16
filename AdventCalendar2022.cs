@@ -1257,6 +1257,187 @@ namespace AdventCalendar2022
             public int Start { get; set; }
             public int End { get; set; }
         }
+
+        [TestMethod]
+        public void Day16_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day16.txt").ToList();
+            List<Valve> valveList = new List<Valve>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                string name = inputSplit[1];
+                Valve valve = valveList.FirstOrDefault(w => w.Name == name);
+                if (valve == null)
+                {
+                    valve = new Valve();
+                    valve.Name = name;
+                    valveList.Add(valve);
+                }
+                valve.FlowRate = int.Parse(inputSplit[4].Substring(5).TrimEnd(';'));
+                List<string> neighbourValveNameList = input.Split("valve")[1].TrimStart('s').Trim().Split(", ").ToList();
+                foreach (string neighbourName in neighbourValveNameList)
+                {
+                    Valve neighbourValve = valveList.FirstOrDefault(w => w.Name == neighbourName);
+                    if (neighbourValve == null)
+                    {
+                        neighbourValve = new Valve { Name = neighbourName };
+                        valveList.Add(neighbourValve);
+                    }
+                    valve.NeighourValveList.Add(neighbourValve);
+                }
+            }
+            RecordFlow recordFlow = new RecordFlow();
+            CheckValvePart1(valveList.FirstOrDefault(w => w.Name == "AA"), String.Empty, 31, 0, 0, valveList.Sum(s => s.FlowRate), string.Empty, recordFlow); // start at 31 since i also include movement to AA
+            int maxFlowRate = recordFlow.MaxFlow;
+        }
+
+        private void CheckValvePart1(Valve current, string combination, int minutesLeft, int currentFlow, int totalFlow, int maxPossibleFlow, string previous, RecordFlow recordFlow)
+        {
+            if (minutesLeft <= 0) // time is out
+            {
+                if (totalFlow > recordFlow.MaxFlow)
+                    recordFlow.MaxFlow = totalFlow;
+                return;
+            }
+            if ((totalFlow + minutesLeft * currentFlow + (maxPossibleFlow - currentFlow) * minutesLeft) < recordFlow.MaxFlow)
+                return;
+            combination += current.Name;
+            minutesLeft--; // move to this valve
+            totalFlow += currentFlow;
+            if (current.FlowRate > 0 && minutesLeft > 0 && !combination.Contains(current.Name + "#")) // turn current valve
+            {
+                int turnValveMinutesLeft = minutesLeft - 1;
+                string turnValveCombination = combination + "#";
+                int turnValveCurrentFlow = currentFlow + current.FlowRate;
+                int turnValveTotalFlow = totalFlow + currentFlow;
+                foreach (Valve neighbour in current.NeighourValveList)
+                    CheckValvePart1(neighbour, turnValveCombination, turnValveMinutesLeft, turnValveCurrentFlow, turnValveTotalFlow, maxPossibleFlow, current.Name, recordFlow);
+            }
+            foreach (Valve neighbour in current.NeighourValveList.Where(w => w.Name != previous)) // Dont turn the valve
+                CheckValvePart1(neighbour, combination, minutesLeft, currentFlow, totalFlow, maxPossibleFlow, current.Name, recordFlow);
+        }
+
+        [TestMethod]
+        public void Day16_2()
+        {
+            // Part 2 is not complete yet
+            List<string> inputList = File.ReadAllLines(@"Input\Day16Test.txt").ToList();
+            List<Valve> valveList = new List<Valve>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                string name = inputSplit[1];
+                Valve valve = valveList.FirstOrDefault(w => w.Name == name);
+                if (valve == null)
+                {
+                    valve = new Valve();
+                    valve.Name = name;
+                    valveList.Add(valve);
+                }
+                valve.FlowRate = int.Parse(inputSplit[4].Substring(5).TrimEnd(';'));
+                List<string> neighbourValveNameList = input.Split("valve")[1].TrimStart('s').Trim().Split(", ").ToList();
+                foreach (string neighbourName in neighbourValveNameList)
+                {
+                    Valve neighbourValve = valveList.FirstOrDefault(w => w.Name == neighbourName);
+                    if (neighbourValve == null)
+                    {
+                        neighbourValve = new Valve { Name = neighbourName };
+                        valveList.Add(neighbourValve);
+                    }
+                    valve.NeighourValveList.Add(neighbourValve);
+                }
+            }
+
+            RecordFlow recordFlow = new RecordFlow { MaxFlow = 0 };
+            CheckValvePart2_1(valveList.FirstOrDefault(w => w.Name == "AA"), valveList.FirstOrDefault(w => w.Name == "AA")
+                , String.Empty, string.Empty, 27, 0, 0, valveList.Sum(s => s.FlowRate), string.Empty, string.Empty, recordFlow); // start at 27 since i also include movement to AA
+            int maxFlowRate = recordFlow.MaxFlow;
+        }
+
+        private void CheckValvePart2_1(Valve current, Valve elephant, string combination, string elephantCombination, int minutesLeft, int currentFlow, int totalFlow
+            , int maxPossibleFlow, string previous, string elephantPrevious, RecordFlow recordFlow)
+        {
+            if (minutesLeft <= 0) // time is out
+            {
+                if (totalFlow > recordFlow.MaxFlow)
+                {
+                    recordFlow.MaxFlow = totalFlow;
+                    Debug.WriteLine(combination + " " + elephantCombination + " " + totalFlow);
+                }
+                return;
+            }
+            if ((totalFlow + minutesLeft * currentFlow + (maxPossibleFlow - currentFlow) * minutesLeft) < recordFlow.MaxFlow)
+                return;
+            minutesLeft--; // move to this valve
+            totalFlow += currentFlow;
+
+            int turnValveTotalFlow = totalFlow + currentFlow;
+            if (current.FlowRate > 0 && minutesLeft > 0 && !combination.Contains(current.Name + "#") && !elephantCombination.Contains(current.Name + "#")) // only human turn valve
+            {
+                foreach (Valve neighbour in current.NeighourValveList)
+                {
+                    foreach (Valve elephantNeightbour in current.NeighourValveList.Where(w => w.Name != elephantPrevious))
+                        CheckValvePart2_1(neighbour, elephantNeightbour, combination + current.Name + "#", elephantCombination + elephant.Name, minutesLeft -1
+                            , currentFlow + current.FlowRate, turnValveTotalFlow, maxPossibleFlow, current.Name, elephant.Name, recordFlow);
+                }
+            }
+            if (elephant.FlowRate > 0 && minutesLeft > 0 && !combination.Contains(elephant.Name + "#") && !elephantCombination.Contains(elephant.Name + "#")) // only elephant turn valve
+            {
+                foreach (Valve neighbour in current.NeighourValveList.Where(w => w.Name != previous))
+                {
+                    foreach (Valve elephantNeightbour in current.NeighourValveList)
+                        CheckValvePart2_1(neighbour, elephantNeightbour, combination + current.Name + elephant.Name, elephantCombination + elephant.Name + "#", minutesLeft - 1
+                            , currentFlow + elephant.FlowRate, turnValveTotalFlow, maxPossibleFlow, current.Name, elephant.Name, recordFlow);
+                }
+            }
+            if (current.FlowRate > 0 && minutesLeft > 0 && !combination.Contains(current.Name + "#") && !elephantCombination.Contains(current.Name + "#")
+                && elephant.FlowRate > 0 && !combination.Contains(elephant.Name + "#") && !elephantCombination.Contains(elephant.Name + "#")
+                && current.Name != elephant.Name) // both turn valve
+            {
+                foreach (Valve neighbour in current.NeighourValveList)
+                {
+                    foreach (Valve elephantNeightbour in current.NeighourValveList)
+                        CheckValvePart2_1(neighbour, elephantNeightbour, combination + current.Name + "#", elephantCombination + elephant.Name + "#", minutesLeft - 1
+                            , currentFlow + current.FlowRate + elephant.FlowRate, turnValveTotalFlow, maxPossibleFlow, current.Name, elephant.Name, recordFlow);
+                }
+            }
+            foreach (Valve neighbour in current.NeighourValveList.Where(w => w.Name != previous))
+            {
+                foreach (Valve elephantNeightbour in current.NeighourValveList.Where(w => w.Name != elephantPrevious))
+                    CheckValvePart2_1(neighbour, elephantNeightbour, combination + current.Name, elephantCombination + elephant.Name, minutesLeft, currentFlow
+                        , totalFlow, maxPossibleFlow, current.Name, elephant.Name, recordFlow);
+            }
+        }
+
+        private void CheckValvePart2_2(Valve current, Valve elephant, string combination, string elephantCombination, int minutesLeft, int currentFlow, int totalFlow
+            , int maxPossibleFlow, string previous, string elephantPrevious, RecordFlow recordFlow)
+        {
+            // try another solution?
+        }
+
+
+        private class Valve
+        {
+            public Valve()
+            {
+                NeighourValveList = new List<Valve>();
+            }
+            public string Name { get; set; }
+            public int FlowRate { get; set; }
+            public List<Valve> NeighourValveList { get; set; }
+        }
+
+        private class ValvePath
+        {
+            public int MaxFlow { get; set; }
+            public string Path { get; set; }
+        }
+
+        private class RecordFlow
+        {
+            public int MaxFlow { get; set; }
+        }
     }
 }
 
