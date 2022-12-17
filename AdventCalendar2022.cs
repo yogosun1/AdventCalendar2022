@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Numerics;
+using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -1503,6 +1504,288 @@ namespace AdventCalendar2022
         private class RecordFlow
         {
             public int MaxFlow { get; set; }
+        }
+
+        [TestMethod]
+        public void Day17_1()
+        {
+            string inputList = File.ReadAllText(@"Input\Day17.txt");
+            int jetStreamLength = inputList.Length;
+            List<Day17Coordinate> cave = new List<Day17Coordinate>();
+            List<Day17Coordinate> shape;
+            int jetStreamCounter = 0;
+            for (int i = 0; i < 2022; i++)
+            {
+                shape = CreateShape(2, (cave.Max(m => (int?)m.Y) ?? -1) + 4, i % 5);
+                //Day17PrintCave(cave, shape);
+                bool fall = false;
+                bool shapeEnd = false;
+                while (!shapeEnd)
+                {
+                    if (!fall) // jet stream
+                    {
+                        char jetStream = inputList[jetStreamCounter % jetStreamLength];
+                        bool moveAllowed = true;
+                        for (int y = shape.Min(m => m.Y); y <= shape.Max(m => m.Y); y++)
+                        {
+                            int newX;
+                            if (jetStream == '<') // Move left
+                                newX = shape.Where(w => w.Y == y).Min(m => m.X) - 1;
+                            else // Move right
+                                newX = shape.Where(w => w.Y == y).Max(m => m.X) + 1;
+                            if (cave.Any(a => a.X == newX && a.Y == y) || newX < 0 || newX > 6)
+                                moveAllowed = false;
+                        }
+                        if (moveAllowed)
+                        {
+                            int moveX = jetStream == '<' ? -1 : 1;
+                            shape.ForEach(e => e.X += moveX);
+                        }
+                        jetStreamCounter++;
+                    }
+                    else // fall
+                    {
+                        bool moveAllowed = true;
+                        for (int x = shape.Min(m => m.X); x <= shape.Max(m => m.X); x++)
+                        {
+                            int newY = shape.Where(w => w.X == x).Min(m => m.Y) - 1;
+                            if (cave.Any(a => a.Y == newY && a.X == x) || newY < 0)
+                                moveAllowed = false;
+                        }
+                        if (moveAllowed)
+                            shape.ForEach(e => e.Y -= 1);
+                        else // shape end position
+                        {
+                            foreach (Day17Coordinate coordinate in shape)
+                                cave.Add(coordinate);
+                            shapeEnd = true;
+                        }
+                    }
+                    fall = !fall;
+                    //Day17PrintCave(cave, shape);
+                }
+                //Day17PrintCave(cave, shape);
+            }
+
+            int towerHeight = cave.Max(m => m.Y) + 1;
+        }
+
+        [TestMethod]
+        public void Day17_2()
+        {
+            string inputList = File.ReadAllText(@"Input\Day17Test.txt");
+            int height = CalculateTowerHeight(inputList, 100000);
+
+
+            //Int64 loopTotalHeight = ((Int64)1000000000000 / (Int64)8) * (Int64)loopHeight;
+            //Int64 remainingLoops = ((Int64)1000000000000 % (Int64)8);
+            //int remainingHeight = CalculateTowerHeight(inputList, (int)remainingLoops, false);
+
+
+        }
+
+        private int CalculateTowerHeight(string inputList, int rocks)
+        {
+            int jetStreamLength = inputList.Length;
+            List<Day17Coordinate> cave = new List<Day17Coordinate>();
+            List<Day17Coordinate> shape;
+            int jetStreamCounter = 0;
+            List<int> heightList = new List<int>();
+            for (Int64 i = 0; i < rocks; i++)
+            {
+                int shapeId = (int)((Int64)i % 5);
+                shape = CreateShape(2, (cave.Max(m => (int?)m.Y) ?? -1) + 4, (int)((Int64)i % 5));
+                //Day17PrintCave(cave, shape);
+                bool fall = false;
+                bool shapeEnd = false;
+                while (!shapeEnd)
+                {
+                    if (!fall) // jet stream
+                    {
+                        char jetStream = inputList[jetStreamCounter % jetStreamLength];
+                        bool moveAllowed = true;
+                        for (int y = shape.Min(m => m.Y); y <= shape.Max(m => m.Y); y++)
+                        {
+                            int newX;
+                            if (jetStream == '<') // Move left
+                                newX = shape.Where(w => w.Y == y).Min(m => m.X) - 1;
+                            else // Move right
+                                newX = shape.Where(w => w.Y == y).Max(m => m.X) + 1;
+                            if (cave.Any(a => a.X == newX && a.Y == y) || newX < 0 || newX > 6)
+                                moveAllowed = false;
+                        }
+                        if (moveAllowed)
+                        {
+                            int moveX = jetStream == '<' ? -1 : 1;
+                            shape.ForEach(e => e.X += moveX);
+                        }
+                        jetStreamCounter++;
+                    }
+                    else // fall
+                    {
+                        bool moveAllowed = true;
+                        for (int x = shape.Min(m => m.X); x <= shape.Max(m => m.X); x++)
+                        {
+                            int newY = shape.Where(w => w.X == x).Min(m => m.Y) - 1;
+                            if (cave.Any(a => a.Y == newY && a.X == x) || newY < 0)
+                                moveAllowed = false;
+                        }
+                        if (moveAllowed)
+                            shape.ForEach(e => e.Y -= 1);
+                        else // shape end position
+                        {
+                            foreach (Day17Coordinate coordinate in shape)
+                                cave.Add(coordinate);
+                            shapeEnd = true;
+                        }
+                    }
+                    fall = !fall;
+                    //Day17PrintCave(cave, shape);
+                }
+                //if (shapeId == 4)
+                heightList.Add(cave.Max(m => m.Y) + 1);
+                CheckLoop(cave, heightList, (int)i);
+                //Day17PrintCave(cave, shape);
+            }
+            int towerHeight = cave.Max(m => m.Y) + 1;
+            return towerHeight;
+        }
+
+        private bool CheckLoop(List<Day17Coordinate> cave, List<int> heightList, int i)
+        {
+            int rockCount = i + 1;
+            if (rockCount % 2 != 0)
+                return false;
+            int halfHeight = heightList[rockCount / 2];
+            int totalHeight = heightList[i];
+            if (halfHeight * 2 != totalHeight)
+                return false;
+
+            //int maxY = cave.Max(m => m.Y);
+            //if (maxY % 2 == 0)
+            //    return false;
+            //int halfY = maxY / 2;
+            //List<Day17Coordinate> topHalf = cave.Where(w => w.Y > halfY).ToList();
+            //List<Day17Coordinate> bottomHalf = cave.Where(w => w.Y <= halfY).ToList();
+
+            //int topYDistance = topHalf.Max(m => m.Y) - topHalf.Min(m => m.Y);
+            //int bottomYDistance = bottomHalf.Max(m => m.Y) - bottomHalf.Min(m => m.Y);
+
+            //if (topHalf.Count() != bottomHalf.Count())
+            //    return false;
+
+            //Debug.WriteLine("Match found with " + topHalf.Count() + " pieces");
+
+            //topHalf = topHalf.OrderBy(o => o.Y).ThenBy(t => t.X).ToList();
+            //bottomHalf = bottomHalf.OrderBy(o => o.Y).ThenBy(t => t.X).ToList();
+
+            //for (int i = 0; i < topHalf.Count(); i++)
+            //{
+            //    Day17Coordinate topPiece = topHalf[i];
+            //    Day17Coordinate bottomPiece = bottomHalf[i];
+            //    if (topPiece.X != bottomPiece.X)
+            //    {
+            //        Debug.WriteLine("Piece number " + i + " did not match. " + topPiece.X + " " + bottomPiece.X);
+            //        return false;
+            //    }
+            //}
+
+
+            //if (topHalf.Any(t => !bottomHalf.Any(b => b.X == t.X && b.Y == t.Y - halfY)))
+            //    return false;
+            //if (bottomHalf.Any(b => !topHalf.Any(t => b.X == t.X && b.Y == t.Y - halfY)))
+            //    return false;
+            return true;
+        }
+
+        private List<Day17Coordinate> CreateShape(int x, int y, int shapeId)
+        {
+            List<Day17Coordinate> shape = null;
+            if (shapeId == 0)
+            {
+                shape = new List<Day17Coordinate>
+                {
+                    new Day17Coordinate { X = x, Y = y },
+                    new Day17Coordinate { X = x + 1, Y = y },
+                    new Day17Coordinate { X = x + 2, Y = y },
+                    new Day17Coordinate { X = x + 3, Y = y }
+                };
+            }
+            else if (shapeId == 1)
+            {
+                shape = new List<Day17Coordinate>
+                {
+                    new Day17Coordinate { X = x + 1, Y = y },
+                    new Day17Coordinate { X = x, Y = y + 1 },
+                    new Day17Coordinate { X = x + 1, Y = y + 1 },
+                    new Day17Coordinate { X = x + 2, Y = y + 1 },
+                    new Day17Coordinate { X = x + 1, Y = y + 2 }
+                };
+            }
+            else if (shapeId == 2)
+            {
+                shape = new List<Day17Coordinate>
+                {
+                    new Day17Coordinate { X = x, Y = y },
+                    new Day17Coordinate { X = x + 1, Y = y },
+                    new Day17Coordinate { X = x + 2, Y = y },
+                    new Day17Coordinate { X = x + 2, Y = y + 1 },
+                    new Day17Coordinate { X = x + 2, Y = y + 2 }
+                };
+            }
+            else if (shapeId == 3)
+            {
+                shape = new List<Day17Coordinate>
+                {
+                    new Day17Coordinate { X = x, Y = y },
+                    new Day17Coordinate { X = x, Y = y + 1 },
+                    new Day17Coordinate { X = x, Y = y + 2 },
+                    new Day17Coordinate { X = x, Y = y + 3 }
+                };
+            }
+            else if (shapeId == 4)
+            {
+                shape = new List<Day17Coordinate>
+                {
+                    new Day17Coordinate { X = x, Y = y },
+                    new Day17Coordinate { X = x + 1, Y = y },
+                    new Day17Coordinate { X = x + 1, Y = y + 1 },
+                    new Day17Coordinate { X = x, Y = y + 1 }
+                };
+            }
+            return shape;
+        }
+
+        private void Day17PrintCave(List<Day17Coordinate> cave, List<Day17Coordinate> shape)
+        {
+            int maxY = Math.Max(cave.Max(m => (int?)m.Y) ?? 0, shape.Max(m => (int?)m.Y) ?? 0);
+            for (int y = maxY + 1; y >= -1; y--)
+            {
+                string row = string.Empty;
+                for (int x = 0; x < 7; x++)
+                {
+                    Day17Coordinate coordinate = cave.FirstOrDefault(w => w.X == x && w.Y == y);
+                    if (coordinate == null)
+                        coordinate = shape.FirstOrDefault(w => w.X == x && w.Y == y);
+                    if (coordinate == null)
+                        row += ".";
+                    else
+                        row += "#";
+                }
+                Debug.WriteLine(row);
+            }
+
+        }
+
+        private class Shape
+        {
+            public List<Day17Coordinate> CoordinateList { get; set; }
+        }
+
+        private class Day17Coordinate
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
         }
     }
 }
