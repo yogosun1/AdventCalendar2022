@@ -1573,28 +1573,27 @@ namespace AdventCalendar2022
         [TestMethod]
         public void Day17_2()
         {
-            string inputList = File.ReadAllText(@"Input\Day17Test.txt");
-            int height = CalculateTowerHeight(inputList, 100000);
-
-
-            //Int64 loopTotalHeight = ((Int64)1000000000000 / (Int64)8) * (Int64)loopHeight;
-            //Int64 remainingLoops = ((Int64)1000000000000 % (Int64)8);
-            //int remainingHeight = CalculateTowerHeight(inputList, (int)remainingLoops, false);
-
-
+            string inputList = File.ReadAllText(@"Input\Day17.txt");
+            Day17TowerResult towerResult = CalculateTowerHeight(inputList, 6000);
+            Int64 patternTotalRocks = (Int64)1000000000000 / (Int64)towerResult.PatternRocks;
+            Int64 patternTotalHeight = patternTotalRocks * (Int64)towerResult.PatternHeight;
+            Int64 remainingRocks = ((Int64)1000000000000 % (Int64)towerResult.PatternRocks);
+            towerResult = CalculateTowerHeight(inputList, (int)remainingRocks);
+            Int64 finalHeight = patternTotalHeight + towerResult.Height;
         }
 
-        private int CalculateTowerHeight(string inputList, int rocks)
+        private Day17TowerResult CalculateTowerHeight(string inputList, int rocks)
         {
+            Day17TowerResult towerResult = new Day17TowerResult();
             int jetStreamLength = inputList.Length;
             List<Day17Coordinate> cave = new List<Day17Coordinate>();
             List<Day17Coordinate> shape;
             int jetStreamCounter = 0;
             List<int> heightList = new List<int>();
-            for (Int64 i = 0; i < rocks; i++)
+            for (int i = 0; i < rocks; i++)
             {
-                int shapeId = (int)((Int64)i % 5);
-                shape = CreateShape(2, (cave.Max(m => (int?)m.Y) ?? -1) + 4, (int)((Int64)i % 5));
+                int shapeId = i % 5;
+                shape = CreateShape(2, (cave.Max(m => (int?)m.Y) ?? -1) + 4, i % 5);
                 //Day17PrintCave(cave, shape);
                 bool fall = false;
                 bool shapeEnd = false;
@@ -1642,60 +1641,61 @@ namespace AdventCalendar2022
                     fall = !fall;
                     //Day17PrintCave(cave, shape);
                 }
-                //if (shapeId == 4)
-                heightList.Add(cave.Max(m => m.Y) + 1);
-                CheckLoop(cave, heightList, (int)i);
+
+                if (cave.Max(m => m.Y) > 100)
+                    if (towerResult.PatternRocks == null)
+                        FindPattern(cave, towerResult, i + 1);
                 //Day17PrintCave(cave, shape);
             }
-            int towerHeight = cave.Max(m => m.Y) + 1;
-            return towerHeight;
+            towerResult.Height = cave.Max(m => m.Y) + 1;
+            towerResult.Cave = cave;
+            return towerResult;
         }
 
-        private bool CheckLoop(List<Day17Coordinate> cave, List<int> heightList, int i)
+        private void FindPattern(List<Day17Coordinate> cave, Day17TowerResult towerResult, int rocks)
         {
-            int rockCount = i + 1;
-            if (rockCount % 2 != 0)
-                return false;
-            int halfHeight = heightList[rockCount / 2];
-            int totalHeight = heightList[i];
-            if (halfHeight * 2 != totalHeight)
-                return false;
-
-            //int maxY = cave.Max(m => m.Y);
-            //if (maxY % 2 == 0)
-            //    return false;
-            //int halfY = maxY / 2;
-            //List<Day17Coordinate> topHalf = cave.Where(w => w.Y > halfY).ToList();
-            //List<Day17Coordinate> bottomHalf = cave.Where(w => w.Y <= halfY).ToList();
-
-            //int topYDistance = topHalf.Max(m => m.Y) - topHalf.Min(m => m.Y);
-            //int bottomYDistance = bottomHalf.Max(m => m.Y) - bottomHalf.Min(m => m.Y);
-
-            //if (topHalf.Count() != bottomHalf.Count())
-            //    return false;
-
-            //Debug.WriteLine("Match found with " + topHalf.Count() + " pieces");
-
-            //topHalf = topHalf.OrderBy(o => o.Y).ThenBy(t => t.X).ToList();
-            //bottomHalf = bottomHalf.OrderBy(o => o.Y).ThenBy(t => t.X).ToList();
-
-            //for (int i = 0; i < topHalf.Count(); i++)
-            //{
-            //    Day17Coordinate topPiece = topHalf[i];
-            //    Day17Coordinate bottomPiece = bottomHalf[i];
-            //    if (topPiece.X != bottomPiece.X)
-            //    {
-            //        Debug.WriteLine("Piece number " + i + " did not match. " + topPiece.X + " " + bottomPiece.X);
-            //        return false;
-            //    }
-            //}
-
-
-            //if (topHalf.Any(t => !bottomHalf.Any(b => b.X == t.X && b.Y == t.Y - halfY)))
-            //    return false;
-            //if (bottomHalf.Any(b => !topHalf.Any(t => b.X == t.X && b.Y == t.Y - halfY)))
-            //    return false;
-            return true;
+            List<Day17Coordinate> orderedList = cave.OrderByDescending(o => o.Y).ThenBy(t => t.X).ToList();
+            List<Day17Coordinate> compareList;
+            int patternMatchCount = 0;
+            if (towerResult.Pattern != null)
+                compareList = towerResult.Pattern;
+            else
+                compareList = orderedList.Take(50).ToList();
+            for (int i = 50; i <= orderedList.Count() - 50; i++)
+            {
+                List<Day17Coordinate> tempList = orderedList.Skip(i).Take(50).ToList();
+                bool foundMatch = true;
+                for (int j = 0; j < 50; j++)
+                {
+                    if (tempList[j].X != compareList[j].X)
+                    {
+                        foundMatch = false;
+                        break;
+                    }
+                }
+                if (foundMatch)
+                {
+                    patternMatchCount++;
+                    if (towerResult.Pattern == null)
+                    {
+                        towerResult.Pattern = compareList;
+                        towerResult.PatternFirstMatchHeight = cave.Max(m => m.Y);
+                        towerResult.PatternFirstMatchRocksNr = rocks;
+                    }
+                    else if (patternMatchCount == 2 && towerResult.PatternSecondMatchRocksNr == null)
+                    {
+                        towerResult.PatternSecondMatchHeight = cave.Max(m => m.Y);
+                        towerResult.PatternSecondMatchRocksNr = rocks;
+                    }
+                    else if (patternMatchCount == 3 && towerResult.PatternRocks == null)
+                    {
+                        // For some reason i only get the correct pattern rocks and height after the second match and not on the first.
+                        // Maybe ill investigate this later, but for now i get the correct result.
+                        towerResult.PatternRocks = rocks - towerResult.PatternSecondMatchRocksNr;
+                        towerResult.PatternHeight = cave.Max(m => m.Y) - towerResult.PatternSecondMatchHeight;
+                    }
+                }
+            }
         }
 
         private List<Day17Coordinate> CreateShape(int x, int y, int shapeId)
@@ -1786,6 +1786,19 @@ namespace AdventCalendar2022
         {
             public int X { get; set; }
             public int Y { get; set; }
+        }
+
+        private class Day17TowerResult
+        {
+            public List<Day17Coordinate> Cave { get; set; }
+            public int Height { get; set; }
+            public List<Day17Coordinate> Pattern { get; set; }
+            public int? PatternFirstMatchRocksNr { get; set; }
+            public int? PatternFirstMatchHeight { get; set; }
+            public int? PatternSecondMatchRocksNr { get; set; }
+            public int? PatternSecondMatchHeight { get; set; }
+            public int? PatternRocks { get; set; }
+            public int? PatternHeight { get; set; }
         }
     }
 }
