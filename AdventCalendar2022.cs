@@ -1871,13 +1871,6 @@ namespace AdventCalendar2022
                 exposedSides += 6 - cubeList.Where(w => (Math.Abs(w.X - cube.X) + Math.Abs(w.Y - cube.Y) + Math.Abs(w.Z - cube.Z)) == 1 && !w.IsExposed).Count();
             }
         }
-
-        private void CheckNeighbours()
-        {
-
-        }
-
-
         private class Cube
         {
             public int X { get; set; }
@@ -1885,6 +1878,150 @@ namespace AdventCalendar2022
             public int Z { get; set; }
             public bool IsAir { get; set; }
             public bool IsExposed { get; set; }
+        }
+
+        [TestMethod]
+        public void Day19_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day19.txt").ToList();
+            List<Blueprint> blueprintList = new List<Blueprint>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                blueprintList.Add(new Blueprint
+                {
+                    BlueprintId = int.Parse(inputSplit[1].TrimEnd(':')),
+                    OreRobotOreCost = int.Parse(inputSplit[6]),
+                    ClayRobotOreCost = int.Parse(inputSplit[12]),
+                    ObsidianRobotOreCost = int.Parse(inputSplit[18]),
+                    ObsidianRobotClayCost = int.Parse(inputSplit[21]),
+                    GeodeRobotOreCost = int.Parse(inputSplit[27]),
+                    GeodeRobotObsidianCost = int.Parse(inputSplit[30]),
+                });
+            }
+            List<int> qualityLevels = new List<int>();
+            foreach (Blueprint blueprint in blueprintList)
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                RecordGeode recordGeode = new RecordGeode { MaxGeode = 0 };
+                int maxOre = new List<int> { blueprint.OreRobotOreCost, blueprint.ObsidianRobotOreCost, blueprint.GeodeRobotOreCost, blueprint.ClayRobotOreCost }.Max();
+                SimulateRobots(24, blueprint, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, maxOre, recordGeode);
+                qualityLevels.Add(blueprint.BlueprintId * recordGeode.MaxGeode);
+                Debug.WriteLine("Blueprint " + blueprint.BlueprintId + " MaxGeode: " + recordGeode.MaxGeode + " qualityLevel: " + blueprint.BlueprintId * recordGeode.MaxGeode + " Elapsed: " + stopwatch.Elapsed);
+                stopwatch.Stop();
+            }
+            int sumQualityLevels = qualityLevels.Sum();
+            Debug.WriteLine("Quality: " + sumQualityLevels);
+        }
+
+        [TestMethod]
+        public void Day19_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day19.txt").ToList();
+            List<Blueprint> blueprintList = new List<Blueprint>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                blueprintList.Add(new Blueprint
+                {
+                    BlueprintId = int.Parse(inputSplit[1].TrimEnd(':')),
+                    OreRobotOreCost = int.Parse(inputSplit[6]),
+                    ClayRobotOreCost = int.Parse(inputSplit[12]),
+                    ObsidianRobotOreCost = int.Parse(inputSplit[18]),
+                    ObsidianRobotClayCost = int.Parse(inputSplit[21]),
+                    GeodeRobotOreCost = int.Parse(inputSplit[27]),
+                    GeodeRobotObsidianCost = int.Parse(inputSplit[30]),
+                });
+            }
+            List<int> geodeList = new List<int>();
+            foreach (Blueprint blueprint in blueprintList.Take(3))
+            {
+                Stopwatch stopwatch = new Stopwatch();
+                stopwatch.Start();
+                RecordGeode recordGeode = new RecordGeode { MaxGeode = 0 };
+                int maxOre = new List<int> { blueprint.OreRobotOreCost, blueprint.ObsidianRobotOreCost, blueprint.GeodeRobotOreCost, blueprint.ClayRobotOreCost }.Max();
+                SimulateRobots(32, blueprint, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, maxOre, recordGeode);
+                geodeList.Add(recordGeode.MaxGeode);
+                Debug.WriteLine("Blueprint " + blueprint.BlueprintId + " MaxGeode: " + recordGeode.MaxGeode + " Elapsed: " + stopwatch.Elapsed);
+                stopwatch.Stop();
+            }
+            int multipliedGeodes = geodeList.Aggregate((sum, next) => sum * next);
+            Debug.WriteLine("Multiplied geodes: " + multipliedGeodes);
+        }
+
+        private void SimulateRobots(int minutesLeft, Blueprint blueprint, int oreRobots, int clayRobots, int obsidianRobots, int geodeRobots,
+            int ore, int clay, int obsidian, int geode, int oreRobotConstruction, int clayRobotConstruction, int obsidianRobotConstruction, int geodeRobotConstruction
+            , int maxOre, RecordGeode recordGeode)
+        {
+            ore += oreRobots;
+            clay += clayRobots;
+            obsidian += obsidianRobots;
+            geode += geodeRobots;
+            minutesLeft--;
+            oreRobots += oreRobotConstruction;
+            clayRobots += clayRobotConstruction;
+            obsidianRobots += obsidianRobotConstruction;
+            geodeRobots += geodeRobotConstruction;
+            if (geode + geodeRobots * minutesLeft + (minutesLeft * minutesLeft) / 2 < recordGeode.MaxGeode)
+                return;
+            if (minutesLeft == 0)
+            {
+                if (recordGeode.MaxGeode < geode)
+                {
+                    Debug.WriteLine("MaxGeode: " + geode + " OreRobots: " + oreRobots + " ClayRobots: " + clayRobots + " ObsidianRobots: " + obsidianRobots + " GeodeRobots: " + geodeRobots
+                        + " Ore: " + ore + " Clay: " + clay + " Obsidian: " + obsidian);
+                    recordGeode.MaxGeode = geode;
+                }
+                return;
+            }
+            if (ore >= blueprint.OreRobotOreCost)
+                SimulateRobots(minutesLeft, blueprint, oreRobots, clayRobots, obsidianRobots, geodeRobots, ore - blueprint.OreRobotOreCost, clay, obsidian, geode, 1, 0, 0, 0, maxOre, recordGeode);
+            if (ore >= blueprint.ClayRobotOreCost)
+                SimulateRobots(minutesLeft, blueprint, oreRobots, clayRobots, obsidianRobots, geodeRobots, ore - blueprint.ClayRobotOreCost, clay, obsidian, geode, 0, 1, 0, 0, maxOre, recordGeode);
+            if (ore >= blueprint.ObsidianRobotOreCost && clay >= blueprint.ObsidianRobotClayCost)
+                SimulateRobots(minutesLeft, blueprint, oreRobots, clayRobots, obsidianRobots, geodeRobots, ore - blueprint.ObsidianRobotOreCost
+                    , clay - blueprint.ObsidianRobotClayCost, obsidian, geode, 0, 0, 1, 0, maxOre, recordGeode);
+            if (ore >= blueprint.GeodeRobotOreCost && obsidian >= blueprint.GeodeRobotObsidianCost)
+                SimulateRobots(minutesLeft, blueprint, oreRobots, clayRobots, obsidianRobots, geodeRobots, ore - blueprint.GeodeRobotOreCost
+                    , clay, obsidian - blueprint.GeodeRobotObsidianCost, geode, 0, 0, 0, 1, maxOre, recordGeode);
+            if (ore < maxOre
+                || (clay < blueprint.ObsidianRobotClayCost && clayRobots > 0)
+                || (obsidian < blueprint.GeodeRobotObsidianCost && obsidianRobots > 0))
+                SimulateRobots(minutesLeft, blueprint, oreRobots, clayRobots, obsidianRobots, geodeRobots, ore, clay, obsidian, geode, 0, 0, 0, 0, maxOre, recordGeode);
+            return;
+        }
+
+        private class Resources
+        {
+            public int OreRobots { get; set; }
+            public int ClayRobots { get; set; }
+            public int ObsidianRobots { get; set; }
+            public int GeodeRobots { get; set; }
+            public int Ore { get; set; }
+            public int Clay { get; set; }
+            public int Obsidian { get; set; }
+            public int Geode { get; set; }
+            public int OreRobotConstruction { get; set; }
+            public int ClayRobotConstruction { get; set; }
+            public int ObsidianRobotConstruction { get; set; }
+            public int GeodeRobotConstruction { get; set; }
+        }
+
+        private class RecordGeode
+        {
+            public int MaxGeode { get; set; }
+        }
+
+        private class Blueprint
+        {
+            public int BlueprintId { get; set; }
+            public int OreRobotOreCost { get; set; }
+            public int ClayRobotOreCost { get; set; }
+            public int ObsidianRobotOreCost { get; set; }
+            public int ObsidianRobotClayCost { get; set; }
+            public int GeodeRobotOreCost { get; set; }
+            public int GeodeRobotObsidianCost { get; set; }
         }
     }
 }
