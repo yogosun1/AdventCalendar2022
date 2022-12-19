@@ -1992,22 +1992,6 @@ namespace AdventCalendar2022
             return;
         }
 
-        private class Resources
-        {
-            public int OreRobots { get; set; }
-            public int ClayRobots { get; set; }
-            public int ObsidianRobots { get; set; }
-            public int GeodeRobots { get; set; }
-            public int Ore { get; set; }
-            public int Clay { get; set; }
-            public int Obsidian { get; set; }
-            public int Geode { get; set; }
-            public int OreRobotConstruction { get; set; }
-            public int ClayRobotConstruction { get; set; }
-            public int ObsidianRobotConstruction { get; set; }
-            public int GeodeRobotConstruction { get; set; }
-        }
-
         private class RecordGeode
         {
             public int MaxGeode { get; set; }
