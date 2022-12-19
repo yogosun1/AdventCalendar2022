@@ -1804,19 +1804,89 @@ namespace AdventCalendar2022
         [TestMethod]
         public void Day18_1()
         {
-            List<string> inputList = File.ReadAllLines(@"Input\Day18test.txt").ToList();
+            List<string> inputList = File.ReadAllLines(@"Input\Day18.txt").ToList();
+            List<Cube> cubeList = new List<Cube>();
             foreach (string input in inputList)
             {
+                List<string> inputSplit = input.Split(',').ToList();
+                cubeList.Add(new Cube { X = int.Parse(inputSplit[0]), Y = int.Parse(inputSplit[1]), Z = int.Parse(inputSplit[2]) });
+            }
+            int exposedSides = 0;
+            foreach (Cube cube in cubeList)
+                exposedSides += 6 - cubeList.Where(w => (Math.Abs(w.X - cube.X) + Math.Abs(w.Y - cube.Y) + Math.Abs(w.Z - cube.Z)) == 1).Count();
+        }
 
+        [TestMethod]
+        public void Day18_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day18.txt").ToList();
+            List<Cube> cubeList = new List<Cube>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(',').ToList();
+                cubeList.Add(new Cube { X = int.Parse(inputSplit[0]), Y = int.Parse(inputSplit[1]), Z = int.Parse(inputSplit[2]), IsAir = false, IsExposed = false });
+            }
+
+            int minX = cubeList.Min(m => m.X) - 1;
+            int maxX = cubeList.Max(m => m.X) + 1;
+            int minY = cubeList.Min(m => m.Y) - 1;
+            int maxY = cubeList.Max(m => m.Y) + 1;
+            int minZ = cubeList.Min(m => m.Z) - 1;
+            int maxZ = cubeList.Max(m => m.Z) + 1;
+
+            for (int x = minX; x <= maxX; x++)
+                for (int y = minY; y <= maxY; y++)
+                    for (int z = minZ; z <= maxZ; z++)
+                    {
+                        Cube cube = cubeList.FirstOrDefault(w => w.X == x && w.Y == y && w.Z == z);
+                        if (cube == null)
+                        {
+                            cubeList.Add(new Cube
+                            {
+                                X = x,
+                                Y = y,
+                                Z = z,
+                                IsAir = true,
+                                IsExposed = z == minZ || z == maxZ || y == minY || y == maxY || x == minX || x == maxX
+                            });
+                        }
+                    }
+
+            int previousExposedAirCount = 0;
+            for (int i = 0; i < 50; i++)
+            {
+                List<Cube> exposedAirList = cubeList.Where(w => w.IsAir && !w.IsExposed).ToList();
+                if (previousExposedAirCount != exposedAirList.Count())
+                    previousExposedAirCount = exposedAirList.Count();
+                else
+                    break;
+                foreach (Cube cube in exposedAirList.OrderBy(o => o.X).ThenBy(t => t.Y).ThenBy(b => b.Z))
+                    if (cubeList.Any(w => (Math.Abs(w.X - cube.X) + Math.Abs(w.Y - cube.Y) + Math.Abs(w.Z - cube.Z)) == 1 && w.IsExposed))
+                        cube.IsExposed = true;
+            }
+
+            int exposedSides = 0;
+            foreach (Cube cube in cubeList.Where(w => !w.IsAir))
+            {
+                exposedSides += 6 - cubeList.Where(w => (Math.Abs(w.X - cube.X) + Math.Abs(w.Y - cube.Y) + Math.Abs(w.Z - cube.Z)) == 1 && !w.IsExposed).Count();
             }
         }
+
+        private void CheckNeighbours()
+        {
+
+        }
+
 
         private class Cube
         {
             public int X { get; set; }
             public int Y { get; set; }
             public int Z { get; set; }
+            public bool IsAir { get; set; }
+            public bool IsExposed { get; set; }
         }
     }
 }
+
 
