@@ -1800,6 +1800,23 @@ namespace AdventCalendar2022
             public int? PatternRocks { get; set; }
             public int? PatternHeight { get; set; }
         }
+
+        [TestMethod]
+        public void Day18_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day18test.txt").ToList();
+            foreach (string input in inputList)
+            {
+
+            }
+        }
+
+        private class Cube
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public int Z { get; set; }
+        }
     }
 }
 
