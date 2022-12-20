@@ -2007,6 +2007,44 @@ namespace AdventCalendar2022
             public int GeodeRobotOreCost { get; set; }
             public int GeodeRobotObsidianCost { get; set; }
         }
+
+        [TestMethod]
+        public void Day20_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day20Test.txt").ToList();
+            int order = 0;
+            List<EncryptedNumber> encryptedNumberList = new List<EncryptedNumber>();
+            foreach (string input in inputList)
+                encryptedNumberList.Add(new EncryptedNumber { Number = int.Parse(input), OriginalOrder = order++ });
+
+            EncryptedNumber nextEncryptedNumber = encryptedNumberList.OrderBy(o => o.OriginalOrder).FirstOrDefault();
+            while (nextEncryptedNumber != null)
+            {
+                int index = encryptedNumberList.find(nextEncryptedNumber);
+
+                int number = nextEncryptedNumber.Number % (encryptedNumberList.Count() - 1);
+
+
+                nextEncryptedNumber = encryptedNumberList.Where(w => w.OriginalOrder > nextEncryptedNumber.OriginalOrder).OrderBy(o => o.OriginalOrder).FirstOrDefault();
+            }
+
+            int zeroIndex = encryptedNumberList.FindIndex(w => w.Number == 0);
+            int value1 = encryptedNumberList[(1000 + zeroIndex) % (encryptedNumberList.Count() - 1)].Number;
+            int value2 = encryptedNumberList[(2000 + zeroIndex) % (encryptedNumberList.Count() - 1)].Number;
+            int value3 = encryptedNumberList[(3000 + zeroIndex) % (encryptedNumberList.Count() - 1)].Number;
+            int sum = value1 + value2 + value3;
+
+
+
+
+
+        }
+
+        private class EncryptedNumber
+        {
+            public int OriginalOrder { get; set; }
+            public int Number { get; set; }
+        }
     }
 }
 
