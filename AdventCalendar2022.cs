@@ -11,6 +11,7 @@ using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 
 namespace AdventCalendar2022
 {
@@ -2011,39 +2012,79 @@ namespace AdventCalendar2022
         [TestMethod]
         public void Day20_1()
         {
-            List<string> inputList = File.ReadAllLines(@"Input\Day20Test.txt").ToList();
+            List<string> inputList = File.ReadAllLines(@"Input\Day20.txt").ToList();
             int order = 0;
             List<EncryptedNumber> encryptedNumberList = new List<EncryptedNumber>();
             foreach (string input in inputList)
                 encryptedNumberList.Add(new EncryptedNumber { Number = int.Parse(input), OriginalOrder = order++ });
-
             EncryptedNumber nextEncryptedNumber = encryptedNumberList.OrderBy(o => o.OriginalOrder).FirstOrDefault();
             while (nextEncryptedNumber != null)
             {
-                int index = encryptedNumberList.find(nextEncryptedNumber);
-
-                int number = nextEncryptedNumber.Number % (encryptedNumberList.Count() - 1);
-
-
+                BigInteger newIndex = encryptedNumberList.IndexOf(nextEncryptedNumber);
+                newIndex = (newIndex + nextEncryptedNumber.Number) % (encryptedNumberList.Count() - 1);
+                if (newIndex <= 0)
+                    newIndex = (encryptedNumberList.Count() - 1) + newIndex;
+                encryptedNumberList.Remove(nextEncryptedNumber);
+                encryptedNumberList.Insert((int)newIndex, nextEncryptedNumber);
                 nextEncryptedNumber = encryptedNumberList.Where(w => w.OriginalOrder > nextEncryptedNumber.OriginalOrder).OrderBy(o => o.OriginalOrder).FirstOrDefault();
             }
-
             int zeroIndex = encryptedNumberList.FindIndex(w => w.Number == 0);
-            int value1 = encryptedNumberList[(1000 + zeroIndex) % (encryptedNumberList.Count() - 1)].Number;
-            int value2 = encryptedNumberList[(2000 + zeroIndex) % (encryptedNumberList.Count() - 1)].Number;
-            int value3 = encryptedNumberList[(3000 + zeroIndex) % (encryptedNumberList.Count() - 1)].Number;
-            int sum = value1 + value2 + value3;
+            Int64 value1 = encryptedNumberList[(1000 + zeroIndex) % encryptedNumberList.Count()].Number;
+            Int64 value2 = encryptedNumberList[(2000 + zeroIndex) % encryptedNumberList.Count()].Number;
+            Int64 value3 = encryptedNumberList[(3000 + zeroIndex) % encryptedNumberList.Count()].Number;
+            Int64 sum = value1 + value2 + value3;
+            Debug.WriteLine(sum);
+        }
 
+        [TestMethod]
+        public void Day20_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day20.txt").ToList();
+            int order = 0;
+            List<EncryptedNumber> encryptedNumberList = new List<EncryptedNumber>();
+            foreach (string input in inputList)
+                encryptedNumberList.Add(new EncryptedNumber { Number = (Int64)int.Parse(input), OriginalOrder = order++ });
+            encryptedNumberList.ForEach(e => e.Number *= (Int64)811589153);
+            for (int i = 0; i < 10; i++)
+            {
+                //Day20PrintEncryptedMessage(encryptedNumberList);
+                EncryptedNumber nextEncryptedNumber = encryptedNumberList.OrderBy(o => o.OriginalOrder).FirstOrDefault();
+                while (nextEncryptedNumber != null)
+                {
+                    int move = (int)(nextEncryptedNumber.Number % (encryptedNumberList.Count() - 1));
+                    int currentIndex = encryptedNumberList.IndexOf(nextEncryptedNumber);
+                    int newIndex = currentIndex + move;
+                    if (newIndex < 0)
+                        newIndex += encryptedNumberList.Count() - 1;
+                    if (newIndex >= encryptedNumberList.Count())
+                        newIndex -= encryptedNumberList.Count() - 1;
+                    encryptedNumberList.Remove(nextEncryptedNumber);
+                    encryptedNumberList.Insert(newIndex, nextEncryptedNumber);
+                    nextEncryptedNumber = encryptedNumberList.Where(w => w.OriginalOrder > nextEncryptedNumber.OriginalOrder).OrderBy(o => o.OriginalOrder).FirstOrDefault();
+                }
+            }
+            int zeroIndex = encryptedNumberList.FindIndex(w => w.Number == 0);
+            Int64 value1 = encryptedNumberList[(1000 + zeroIndex) % encryptedNumberList.Count()].Number;
+            Int64 value2 = encryptedNumberList[(2000 + zeroIndex) % encryptedNumberList.Count()].Number;
+            Int64 value3 = encryptedNumberList[(3000 + zeroIndex) % encryptedNumberList.Count()].Number;
+            Int64 sum = value1 + value2 + value3;
+            Debug.WriteLine(sum);
+        }
 
-
-
-
+        private void Day20PrintEncryptedMessage(List<EncryptedNumber> encryptedNumberList)
+        {
+            string message = string.Empty;
+            foreach (EncryptedNumber encryptedNumber in encryptedNumberList)
+            {
+                message += encryptedNumber.Number + ",";
+            }
+            Debug.WriteLine(message.TrimEnd(','));
         }
 
         private class EncryptedNumber
         {
             public int OriginalOrder { get; set; }
-            public int Number { get; set; }
+            public Int64 Number { get; set; }
         }
     }
 }
