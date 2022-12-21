@@ -12,6 +12,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
+using System.Xml.Linq;
 
 namespace AdventCalendar2022
 {
@@ -2085,6 +2086,159 @@ namespace AdventCalendar2022
         {
             public int OriginalOrder { get; set; }
             public Int64 Number { get; set; }
+        }
+
+        [TestMethod]
+        public void Day21_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day21.txt").ToList();
+            List<Day21MonkeyValue> monkeyValueList = new List<Day21MonkeyValue>();
+            List<Day21MonkeyOperation> monkeyOperationList = new List<Day21MonkeyOperation>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                string name = inputSplit[0].TrimEnd(':');
+                int leftValue;
+                if (int.TryParse(inputSplit[1], out leftValue))
+                    monkeyValueList.Add(new Day21MonkeyValue { Name = name, Value = leftValue });
+                else
+                    monkeyOperationList.Add(new Day21MonkeyOperation { Name = name, LeftName = inputSplit[1], Operation = inputSplit[2], RightName = inputSplit[3] });
+            }
+            while (monkeyOperationList.Any())
+            {
+                Day21MonkeyOperation monkeyOperation = monkeyOperationList.FirstOrDefault(w => monkeyValueList.Any(a => a.Name == w.LeftName) && monkeyValueList.Any(a => a.Name == w.RightName));
+                if (monkeyOperation == null)
+                    break;
+
+                double leftValue = monkeyValueList.First(w => w.Name == monkeyOperation.LeftName).Value;
+                double rightValue = monkeyValueList.First(w => w.Name == monkeyOperation.RightName).Value;
+                double result;
+                if (monkeyOperation.Operation == "+")
+                    result = leftValue + rightValue;
+                else if (monkeyOperation.Operation == "-")
+                    result = leftValue - rightValue;
+                else if (monkeyOperation.Operation == "*")
+                    result = leftValue * rightValue;
+                else if (monkeyOperation.Operation == "/")
+                    result = leftValue / rightValue;
+                else
+                    throw new Exception("Invalid operation");
+                monkeyValueList.Add(new Day21MonkeyValue { Name = monkeyOperation.Name, Value = result });
+                monkeyOperationList.Remove(monkeyOperation);
+            }
+            double rootValue = monkeyValueList.First(w => w.Name == "root").Value;
+        }
+
+        [TestMethod]
+        public void Day21_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day21.txt").ToList();
+            List<Day21MonkeyValue> monkeyValueList = new List<Day21MonkeyValue>();
+            List<Day21MonkeyOperation> monkeyOperationList = new List<Day21MonkeyOperation>();
+            foreach (string input in inputList)
+            {
+                List<string> inputSplit = input.Split(' ').ToList();
+                string name = inputSplit[0].TrimEnd(':');
+                int leftValue;
+                if (int.TryParse(inputSplit[1], out leftValue))
+                    monkeyValueList.Add(new Day21MonkeyValue { Name = name, Value = leftValue });
+                else
+                    monkeyOperationList.Add(new Day21MonkeyOperation { Name = name, LeftName = inputSplit[1], Operation = inputSplit[2], RightName = inputSplit[3] });
+            }
+            CalculateMonkeyValue(monkeyValueList, monkeyOperationList, monkeyOperationList.First(w => w.Name == "root"));
+            Day21MonkeyOperation rootMonkeyOperation = monkeyOperationList.First(w => w.Name == "root");
+            Day21MonkeyOperation monkeyOperation = monkeyOperationList.First(w => w.Name == rootMonkeyOperation.LeftName || w.Name == rootMonkeyOperation.RightName);
+            double resultValue = monkeyValueList.First(w => w.Name == rootMonkeyOperation.LeftName || w.Name == rootMonkeyOperation.RightName).Value;
+            double humnValue = CalculateHumnValue(monkeyValueList, monkeyOperationList, monkeyOperation, resultValue);
+        }
+
+        private double CalculateHumnValue(List<Day21MonkeyValue> monkeyValueList, List<Day21MonkeyOperation> monkeyOperationList, Day21MonkeyOperation currentMonkeyOperation, double resultValue)
+        {
+            double? leftValue = monkeyValueList.FirstOrDefault(w => w.Name == currentMonkeyOperation.LeftName && w.Name != "humn")?.Value;
+            double? rightValue = monkeyValueList.FirstOrDefault(w => w.Name == currentMonkeyOperation.RightName && w.Name != "humn")?.Value;
+            double newResultValue;
+            if (leftValue == null)
+            {
+                if (currentMonkeyOperation.Operation == "+")
+                    newResultValue = resultValue - rightValue.Value;
+                else if (currentMonkeyOperation.Operation == "-")
+                    newResultValue = resultValue + rightValue.Value;
+                else if (currentMonkeyOperation.Operation == "*")
+                    newResultValue = resultValue / rightValue.Value;
+                else if (currentMonkeyOperation.Operation == "/")
+                    newResultValue = resultValue * rightValue.Value;
+                else
+                    throw new Exception("Invalid operation");
+                if (currentMonkeyOperation.LeftName == "humn")
+                    return newResultValue;
+                return CalculateHumnValue(monkeyValueList, monkeyOperationList, monkeyOperationList.First(w => w.Name == currentMonkeyOperation.LeftName), newResultValue);
+            }
+            else if (rightValue == null)
+            {
+                if (currentMonkeyOperation.Operation == "+")
+                    newResultValue = resultValue - leftValue.Value;
+                else if (currentMonkeyOperation.Operation == "-")
+                    newResultValue = leftValue.Value - resultValue;
+                else if (currentMonkeyOperation.Operation == "*")
+                    newResultValue = resultValue / leftValue.Value;
+                else if (currentMonkeyOperation.Operation == "/")
+                    newResultValue = resultValue / leftValue.Value;
+                else
+                    throw new Exception("Invalid operation");
+                if (currentMonkeyOperation.RightName == "humn")
+                    return newResultValue;
+                return CalculateHumnValue(monkeyValueList, monkeyOperationList, monkeyOperationList.First(w => w.Name == currentMonkeyOperation.RightName), newResultValue);
+            }
+            else
+                throw new Exception("Bad data");
+        }
+
+
+        private double? CalculateMonkeyValue(List<Day21MonkeyValue> monkeyValueList, List<Day21MonkeyOperation> monkeyOperationList, Day21MonkeyOperation currentMonkeyOperation)
+        {
+            double? leftValue = monkeyValueList.FirstOrDefault(w => w.Name == currentMonkeyOperation.LeftName && w.Name != "humn")?.Value;
+            double? rightValue = monkeyValueList.FirstOrDefault(w => w.Name == currentMonkeyOperation.RightName && w.Name != "humn")?.Value;
+
+            if (leftValue == null && currentMonkeyOperation.LeftName != "humn")
+                leftValue = CalculateMonkeyValue(monkeyValueList, monkeyOperationList, monkeyOperationList.First(w => w.Name == currentMonkeyOperation.LeftName));
+            if (rightValue == null && currentMonkeyOperation.RightName != "humn")
+                rightValue = CalculateMonkeyValue(monkeyValueList, monkeyOperationList, monkeyOperationList.First(w => w.Name == currentMonkeyOperation.RightName));
+            if (leftValue != null)
+                monkeyValueList.Add(new Day21MonkeyValue { Name = currentMonkeyOperation.LeftName, Value = leftValue.Value });
+            if (rightValue != null)
+                monkeyValueList.Add(new Day21MonkeyValue { Name = currentMonkeyOperation.RightName, Value = rightValue.Value });
+            if (leftValue == null || rightValue == null)
+                return null;
+
+            double result;
+            if (currentMonkeyOperation.Operation == "+")
+                result = leftValue.Value + rightValue.Value;
+            else if (currentMonkeyOperation.Operation == "-")
+                result = leftValue.Value - rightValue.Value;
+            else if (currentMonkeyOperation.Operation == "*")
+                result = leftValue.Value * rightValue.Value;
+            else if (currentMonkeyOperation.Operation == "/")
+                result = leftValue.Value / rightValue.Value;
+            else
+                throw new Exception("Invalid operation");
+            monkeyOperationList.Remove(currentMonkeyOperation);
+            return result;
+        }
+
+
+        private class Day21MonkeyValue
+        {
+            public string Name { get; set; }
+            public double Value { get; set; }
+        }
+
+        private class Day21MonkeyOperation
+        {
+            public string Name { get; set; }
+            public string LeftName { get; set; }
+            public string RightName { get; set; }
+            public string Operation { get; set; }
+            //public int Order { get; set; }
         }
     }
 }
