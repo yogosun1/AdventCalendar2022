@@ -2193,7 +2193,6 @@ namespace AdventCalendar2022
                 throw new Exception("Bad data");
         }
 
-
         private double? CalculateMonkeyValue(List<Day21MonkeyValue> monkeyValueList, List<Day21MonkeyOperation> monkeyOperationList, Day21MonkeyOperation currentMonkeyOperation)
         {
             double? leftValue = monkeyValueList.FirstOrDefault(w => w.Name == currentMonkeyOperation.LeftName && w.Name != "humn")?.Value;
@@ -2238,7 +2237,6 @@ namespace AdventCalendar2022
             public string LeftName { get; set; }
             public string RightName { get; set; }
             public string Operation { get; set; }
-            //public int Order { get; set; }
         }
     }
 }
