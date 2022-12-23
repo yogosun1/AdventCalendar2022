@@ -2767,6 +2767,209 @@ namespace AdventCalendar2022
             public int X { get; set; }
             public int Y { get; set; }
         }
+
+        [TestMethod]
+        public void Day23_1()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day23.txt").ToList();
+            List<Day23Elf> elfList = new List<Day23Elf>();
+            int y = 0;
+            foreach (string row in inputList)
+            {
+                int x = 0;
+                foreach (char tile in row)
+                {
+                    if (tile == '#')
+                        elfList.Add(new Day23Elf { X = x, Y = y });
+                    x++;
+                }
+                y++;
+            }
+            List<char> directionList = new List<char> { 'N', 'S', 'W', 'E' };
+            Day23PrintGrid(elfList);
+            for (int i = 0; i < 10; i++)
+            {
+                foreach (Day23Elf elf in elfList)
+                {
+                    elf.Move = false;
+                    List<Day23Elf> neighbourElfList = elfList.Where(w => (Math.Abs(w.X - elf.X) + Math.Abs(w.Y - elf.Y) == 1)
+                        || (Math.Abs(w.X - elf.X) == 1 && Math.Abs(w.Y - elf.Y) == 1)).ToList();
+                    if (neighbourElfList.Count() == 0)
+                        continue;
+                    foreach (char direction in directionList)
+                    {
+                        if (direction == 'N')
+                        {
+                            if (!neighbourElfList.Any(a => a.Y == elf.Y - 1))
+                            {
+                                elf.MoveX = elf.X;
+                                elf.MoveY = elf.Y - 1;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                        else if (direction == 'S')
+                        {
+                            if (!neighbourElfList.Any(a => a.Y == elf.Y + 1))
+                            {
+                                elf.MoveX = elf.X;
+                                elf.MoveY = elf.Y + 1;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                        else if (direction == 'W')
+                        {
+                            if (!neighbourElfList.Any(a => a.X == elf.X - 1))
+                            {
+                                elf.MoveX = elf.X - 1;
+                                elf.MoveY = elf.Y;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                        else if (direction == 'E')
+                        {
+                            if (!neighbourElfList.Any(a => a.X == elf.X + 1))
+                            {
+                                elf.MoveX = elf.X + 1;
+                                elf.MoveY = elf.Y;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                List<string> invalidDestinationList = elfList.Where(w => w.Move).GroupBy(g => new { X = g.MoveX, Y = g.MoveY })
+                    .Select(s => new { X = s.Key.X, Y = s.Key.Y, Count = s.Count() }).Where(w => w.Count > 1).Select(s => s.X + "," + s.Y).ToList();
+                elfList.Where(w => w.Move && invalidDestinationList.Contains(w.MoveX + "," + w.MoveY)).ToList().ForEach(e => e.Move = false);
+                elfList.Where(w => w.Move).ToList().ForEach(e => { e.X = e.MoveX; e.Y = e.MoveY; });
+                char last = directionList.First();
+                directionList.Remove(last);
+                directionList.Add(last);
+                Day23PrintGrid(elfList);
+            }
+            int emptyTiles = (elfList.Max(m => m.X) + 1 - elfList.Min(m => m.X)) * (elfList.Max(m => m.Y) + 1 - elfList.Min(m => m.Y)) - elfList.Count();
+            Debug.WriteLine("Empty tiles: " + emptyTiles);
+        }
+
+        [TestMethod]
+        public void Day23_2()
+        {
+            List<string> inputList = File.ReadAllLines(@"Input\Day23.txt").ToList();
+            List<Day23Elf> elfList = new List<Day23Elf>();
+            int y = 500;
+            foreach (string row in inputList)
+            {
+                int x = 500;
+                foreach (char tile in row)
+                {
+                    if (tile == '#')
+                        elfList.Add(new Day23Elf { X = x, Y = y });
+                    x++;
+                }
+                y++;
+            }
+            List<char> directionList = new List<char> { 'N', 'S', 'W', 'E' };
+            int noMoveRound = 0;
+            for (int i = 1; true; i++)
+            {
+                foreach (Day23Elf elf in elfList)
+                {
+                    List<Day23Elf> neighbourElfList = elfList.Where(w => (Math.Abs(w.X - elf.X) + Math.Abs(w.Y - elf.Y) == 1)
+                        || (Math.Abs(w.X - elf.X) == 1 && Math.Abs(w.Y - elf.Y) == 1)).ToList();
+                    if (neighbourElfList.Count() == 0)
+                        continue;
+                    foreach (char direction in directionList)
+                    {
+                        if (direction == 'N')
+                        {
+                            if (!neighbourElfList.Any(a => a.Y == elf.Y - 1))
+                            {
+                                elf.MoveX = elf.X;
+                                elf.MoveY = elf.Y - 1;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                        else if (direction == 'S')
+                        {
+                            if (!neighbourElfList.Any(a => a.Y == elf.Y + 1))
+                            {
+                                elf.MoveX = elf.X;
+                                elf.MoveY = elf.Y + 1;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                        else if (direction == 'W')
+                        {
+                            if (!neighbourElfList.Any(a => a.X == elf.X - 1))
+                            {
+                                elf.MoveX = elf.X - 1;
+                                elf.MoveY = elf.Y;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                        else if (direction == 'E')
+                        {
+                            if (!neighbourElfList.Any(a => a.X == elf.X + 1))
+                            {
+                                elf.MoveX = elf.X + 1;
+                                elf.MoveY = elf.Y;
+                                elf.Move = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                List<string> invalidDestinationList = elfList.Where(w => w.Move).GroupBy(g => new { X = g.MoveX, Y = g.MoveY })
+                    .Select(s => new { X = s.Key.X, Y = s.Key.Y, Count = s.Count() }).Where(w => w.Count > 1).Select(s => s.X + "," + s.Y).ToList();
+                elfList.Where(w => w.Move && invalidDestinationList.Contains(w.MoveX + "," + w.MoveY)).ToList().ForEach(e => e.Move = false);
+                int moveCount = elfList.Count(c => c.Move);
+                if (moveCount == 0)
+                {
+                    noMoveRound = i;
+                    break;
+                }
+                elfList.Where(w => w.Move).ToList().ForEach(e => { e.X = e.MoveX; e.Y = e.MoveY; e.Move = false; });
+                char last = directionList.First();
+                directionList.Remove(last);
+                directionList.Add(last);
+            }
+            Debug.WriteLine("No move round: " + noMoveRound);
+        }
+
+        private void Day23PrintGrid(List<Day23Elf> elfList)
+        {
+            int maxX = elfList.Max(m => m.X) + 1;
+            int maxY = elfList.Max(m => m.Y) + 1;
+            int minX = elfList.Min(m => m.X) - 1;
+            int minY = elfList.Min(m => m.Y) - 1;
+            string grid = string.Empty;
+            for (int y = minY; y <= maxY; y++)
+            {
+                for (int x = minX; x <= maxX; x++)
+                {
+                    if (elfList.Any(w => w.X == x && w.Y == y))
+                        grid += "#";
+                    else
+                        grid += ".";
+                }
+                grid += Environment.NewLine;
+            }
+            Debug.WriteLine(grid);
+        }
+
+        private class Day23Elf
+        {
+            public int X { get; set; }
+            public int Y { get; set; }
+            public bool Move { get; set; }
+            public int MoveX { get; set; }
+            public int MoveY { get; set; }
+        }
     }
 }
 
