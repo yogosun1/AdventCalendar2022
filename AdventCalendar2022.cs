@@ -2225,7 +2225,6 @@ namespace AdventCalendar2022
             return result;
         }
 
-
         private class Day21MonkeyValue
         {
             public string Name { get; set; }
@@ -2297,77 +2296,49 @@ namespace AdventCalendar2022
                     currentDirection = CalculateDirection(currentDirection, instruction, 1);
                     continue;
                 }
-                if (currentDirection == 'E' || currentDirection == 'W')
+                Day22Coordinate coordinate;
+                for (int i = 0; i < distance; i++)
                 {
-                    List<Day22Coordinate> row = coordinateList.Where(w => w.Y == currentPosition.Y).ToList();
-                    if (currentDirection == 'E')
+                    if (currentDirection == 'E' || currentDirection == 'W')
                     {
-                        for (int i = 0; i < distance; i++)
+                        List<Day22Coordinate> row = coordinateList.Where(w => w.Y == currentPosition.Y).ToList();
+                        if (currentDirection == 'E')
                         {
-                            Day22Coordinate coordinate = row.FirstOrDefault(w => w.X == currentPosition.X + 1);
+                            coordinate = row.FirstOrDefault(w => w.X == currentPosition.X + 1);
                             if (coordinate == null)
                                 coordinate = row.OrderBy(o => o.X).First();
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition = coordinate;
-                                coordinate.VisitedSign = ">";
-                            }
+                            coordinate.VisitedSign = ">";
                         }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < distance; i++)
+                        else
                         {
-                            Day22Coordinate coordinate = row.FirstOrDefault(w => w.X == currentPosition.X - 1);
+                            coordinate = row.FirstOrDefault(w => w.X == currentPosition.X - 1);
                             if (coordinate == null)
                                 coordinate = row.OrderByDescending(o => o.X).First();
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition = coordinate;
-                                coordinate.VisitedSign = "<";
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    List<Day22Coordinate> column = coordinateList.Where(w => w.X == currentPosition.X).ToList();
-                    if (currentDirection == 'N')
-                    {
-                        for (int i = 0; i < distance; i++)
-                        {
-                            Day22Coordinate coordinate = column.FirstOrDefault(w => w.Y == currentPosition.Y - 1);
-                            if (coordinate == null)
-                                coordinate = column.OrderByDescending(o => o.Y).First();
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition = coordinate;
-                                coordinate.VisitedSign = "A";
-                            }
+                            coordinate.VisitedSign = "<";
                         }
                     }
                     else
                     {
-                        for (int i = 0; i < distance; i++)
+                        List<Day22Coordinate> column = coordinateList.Where(w => w.X == currentPosition.X).ToList();
+                        if (currentDirection == 'N')
                         {
-                            Day22Coordinate coordinate = column.FirstOrDefault(w => w.Y == currentPosition.Y + 1);
+                            coordinate = column.FirstOrDefault(w => w.Y == currentPosition.Y - 1);
+                            if (coordinate == null)
+                                coordinate = column.OrderByDescending(o => o.Y).First();
+                            coordinate.VisitedSign = "A";
+                        }
+                        else
+                        {
+                            coordinate = column.FirstOrDefault(w => w.Y == currentPosition.Y + 1);
                             if (coordinate == null)
                                 coordinate = column.OrderBy(o => o.Y).First();
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition = coordinate;
-                                coordinate.VisitedSign = "v";
-                            }
+                            coordinate.VisitedSign = "v";
                         }
                     }
+                    if (coordinate.IsRock)
+                        break;
+                    else
+                        currentPosition = coordinate;
                 }
             }
             Day22PrintMap(coordinateList);
@@ -2431,9 +2402,8 @@ namespace AdventCalendar2022
                 coordinate.Y = coordinate.Y % sideLength;
             }
             List<Day22Side> sideList = coordinateList.GroupBy(g => new { g.SideX, g.SideY }).Select(s => new Day22Side { X = s.Key.SideX, Y = s.Key.SideY }).ToList();
-            //Day22PrintMap2(coordinateList, true);
             Day22Coordinate currentPosition = coordinateList.OrderBy(o => o.Y).ThenBy(t => t.X).First();
-            currentPosition.VisitedSign = ">";
+            currentPosition.VisitedSign = "X";
             char currentDirection = 'E'; // E = east, W = west, N = north, S = south
             foreach (string instruction in instructionList)
             {
@@ -2445,13 +2415,13 @@ namespace AdventCalendar2022
                 }
                 for (int i = 0; i < distance; i++)
                 {
-                    //Day22PrintMap2(coordinateList, false);
+                    char newDirection = currentDirection;
+                    Day22Coordinate coordinate;
                     if (currentDirection == 'E' || currentDirection == 'W')
                     {
                         if (currentDirection == 'E')
                         {
-                            char newDirection = currentDirection;
-                            Day22Coordinate coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X + 1 && w.Y == currentPosition.Y && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
+                            coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X + 1 && w.Y == currentPosition.Y && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
                             if (coordinate == null)
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == 0 && w.Y == currentPosition.Y && w.SideX == (currentPosition.SideX + 1) % 4 && w.SideY == currentPosition.SideY);
                             if (coordinate == null && sideList.Count(c => (c.X == currentPosition.SideX && c.Y == (currentPosition.SideY + 3) % 4)
@@ -2496,21 +2466,11 @@ namespace AdventCalendar2022
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == newX && w.Y == newY && w.SideX == newSideX && w.SideY == newSideY);
                                 newDirection = CalculateDirection(currentDirection, "R", 1);
                             }
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition.VisitedSign = "X";
-                                currentPosition = coordinate;
-                                currentDirection = newDirection;
-                                coordinate.VisitedSign = "A";
-                            }
                         }
                         else
                         {
-                            char newDirection = currentDirection;
-                            Day22Coordinate coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X - 1 && w.Y == currentPosition.Y && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
-                            if (coordinate == null) // west
+                            coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X - 1 && w.Y == currentPosition.Y && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
+                            if (coordinate == null)
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == sideLength - 1 && w.Y == currentPosition.Y && w.SideX == (currentPosition.SideX + 3) % 4 && w.SideY == currentPosition.SideY);
                             if (coordinate == null && sideList.Count(c => (c.X == currentPosition.SideX && c.Y == (currentPosition.SideY + 1) % 4)
                                     || (c.X == currentPosition.SideX && c.Y == (currentPosition.SideY + 2) % 4)
@@ -2556,23 +2516,13 @@ namespace AdventCalendar2022
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == newX && w.Y == newY && w.SideX == newSideX && w.SideY == newSideY);
                                 newDirection = CalculateDirection(currentDirection, "L", 1);
                             }
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition.VisitedSign = "X";
-                                currentPosition = coordinate;
-                                currentDirection = newDirection;
-                                coordinate.VisitedSign = "A";
-                            }
                         }
                     }
                     else
                     {
                         if (currentDirection == 'N')
                         {
-                            char newDirection = currentDirection;
-                            Day22Coordinate coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X && w.Y == currentPosition.Y - 1 && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
+                            coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X && w.Y == currentPosition.Y - 1 && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
                             if (coordinate == null)
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X && w.Y == sideLength - 1 && w.SideX == currentPosition.SideX && w.SideY == (currentPosition.SideY + 3) % 4);
                             if (coordinate == null && sideList.Count(c => (c.X == (currentPosition.SideX + 3) % 4 && c.Y == currentPosition.SideY)
@@ -2609,20 +2559,10 @@ namespace AdventCalendar2022
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == newX && w.Y == newY && w.SideX == newSideX && w.SideY == newSideY);
                                 newDirection = CalculateDirection(currentDirection, "R", 1);
                             }
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition.VisitedSign = "X";
-                                currentPosition = coordinate;
-                                currentDirection = newDirection;
-                                coordinate.VisitedSign = "A";
-                            }
                         }
                         else
                         {
-                            char newDirection = currentDirection;
-                            Day22Coordinate coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X && w.Y == currentPosition.Y + 1 && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
+                            coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X && w.Y == currentPosition.Y + 1 && w.SideX == currentPosition.SideX && w.SideY == currentPosition.SideY);
                             if (coordinate == null)
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == currentPosition.X && w.Y == 0 && w.SideX == currentPosition.SideX && w.SideY == (currentPosition.SideY + 1) % 4);
                             if (coordinate == null && sideList.Count(c => (c.X == (currentPosition.SideX + 3) % 4 && c.Y == currentPosition.SideY)
@@ -2658,16 +2598,16 @@ namespace AdventCalendar2022
                                 coordinate = coordinateList.FirstOrDefault(w => w.X == newX && w.Y == newY && w.SideX == newSideX && w.SideY == newSideY);
                                 newDirection = CalculateDirection(currentDirection, "R", 2);
                             }
-                            if (coordinate.IsRock)
-                                break;
-                            else
-                            {
-                                currentPosition.VisitedSign = "X";
-                                currentPosition = coordinate;
-                                currentDirection = newDirection;
-                                coordinate.VisitedSign = "A";
-                            }
                         }
+                    }
+                    if (coordinate.IsRock)
+                        break;
+                    else
+                    {
+                        currentPosition.VisitedSign = "X";
+                        currentPosition = coordinate;
+                        currentDirection = newDirection;
+                        coordinate.VisitedSign = "A";
                     }
                 }
             }
